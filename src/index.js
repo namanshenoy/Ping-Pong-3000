@@ -1,13 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Carousel from 'C:/Users/sverduzc/node_modules/react-bootstrap/Carousel';
+import Carousel from 'react-bootstrap/Carousel';
 import logo from './Images/front.jpg';
 import SlidingCarousel from './SlidingCarousel';
 import ListContainer from './RankList';
-import Button from 'C:/Users/sverduzc/node_modules/react-bootstrap/Button';
+import Button from 'react-bootstrap/Button';
 import LoginRegisterContainer from './LoginRegister'
 
+import socketIOClient from "socket.io-client";
 
+//
 import './index.css';
 import * as serviceWorker from './serviceWorker';
 
@@ -32,7 +34,10 @@ class Main extends React.Component{
 	constructor(props){
 		super(props)
 		this.state = {
-			currentPlayer: localStorage.getItem('currentPlayer')
+			response: false,
+			currentPlayer: localStorage.getItem('currentPlayer'),
+			endpoint: "http://127.0.0.1:4001",
+			socket: socketIOClient('http://127.0.0.1:4001')
 		}
 
 		this.handleLoginRender = 
@@ -40,6 +45,14 @@ class Main extends React.Component{
 
 		this.handleLogout = 
 		this.handleLogout.bind(this);
+	}
+
+	componentDidMount(){
+		const endpoint = this.state.endpoint;
+    	const socket = this.state.socket;
+    	socket.on("FromAPI", data => 
+        this.setState({ response: data.date })
+        )
 	}
 
 	handleLoginRender(){
@@ -56,6 +69,8 @@ class Main extends React.Component{
 	}
 
 	render(){
+		    const response= this.state.response;
+		    console.log(response);
 		return(
 			<div class="MainContainer">
 				<SlidingCarousel messages={messages}/>

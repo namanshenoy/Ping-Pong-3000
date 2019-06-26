@@ -1,5 +1,5 @@
 import React from 'react';
-import Table from 'C:/Users/sverduzc/node_modules/react-bootstrap/Table';
+import Table from 'react-bootstrap/Table';
 
 
 /* Simulating API CALL here */
@@ -12,7 +12,6 @@ class ListContainer extends React.Component{
 		}
 	}
 
-	//		fetch('https://cors-anywhere.herokuapp.com/https://jsonplaceholder.typicode.com/users')
 
 	componentDidMount(){
 		let testPlayer = [];

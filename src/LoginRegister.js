@@ -1,7 +1,7 @@
 import React from 'react';
-import Table from 'C:/Users/sverduzc/node_modules/react-bootstrap/Table';
-import Button from 'C:/Users/sverduzc/node_modules/react-bootstrap/Button';
-import Form from 'C:/Users/sverduzc/node_modules/react-bootstrap/Form';
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 
 
 class LoginRegisterContainer extends React.Component{
