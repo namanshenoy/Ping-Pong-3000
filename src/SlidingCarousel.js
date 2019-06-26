@@ -1,5 +1,5 @@
 import React from 'react';
-import Carousel from 'C:/Users/sverduzc/node_modules/react-bootstrap/Carousel';
+import Carousel from '/react-bootstrap/Carousel';
 import logo from './Images/front.jpg';
 
 
