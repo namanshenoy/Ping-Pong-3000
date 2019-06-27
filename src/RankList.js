@@ -5,28 +5,19 @@ import Table from 'react-bootstrap/Table';
 /* Simulating API CALL here */
 class ListContainer extends React.Component{
 
+	componentWillReceiveProps({players}) {
+  		this.setState({players: players})
+	}
+
 	constructor(props){
 		super(props)
 		this.state = {
-			players: []
+			players: this.props.players
 		}
 	}
 
 
 	componentDidMount(){
-		let testPlayer = [];
-		fetch('http://localhost:8080/getPlayers')
-		.then(res => res.json())
-		.then(json => {
-			json.players.map((person)=>{
-				let dummyPlayer= {name: person.name, rank: person.rank}
-				testPlayer.push(dummyPlayer)
-			})
-
-			this.setState({
-				players: testPlayer
-			})
-		});
 
 	}
 

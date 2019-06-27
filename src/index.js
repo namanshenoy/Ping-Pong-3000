@@ -20,13 +20,6 @@ const messages = [
 {title: "Losers!", message: 'Max on 15 game losing streak!'}
 ];
 
-const PLAYERS = [
-  {name: 'Naman', rank:'1'},
-  {name: 'Sal', rank: '2'},
-  {name: 'Max', rank:'3'},
-  {name: 'Cam', rank:'4'}
-];
-
 
 /* Simulating API call here */
 class Main extends React.Component{
@@ -37,7 +30,8 @@ class Main extends React.Component{
 			response: false,
 			currentPlayer: localStorage.getItem('currentPlayer'),
 			endpoint: "http://127.0.0.1:4001",
-			socket: socketIOClient('http://127.0.0.1:4001')
+			socket: socketIOClient('http://127.0.0.1:4000'),
+			players: []
 		}
 
 		this.handleLoginRender = 
@@ -48,12 +42,41 @@ class Main extends React.Component{
 	}
 
 	componentDidMount(){
+		let playerArray = [];
+		let testPlayer = [];
 		const endpoint = this.state.endpoint;
     	const socket = this.state.socket;
-    	socket.on("FromAPI", data => 
-        this.setState({ response: data.date })
-        )
+    	let dummyPlayer;
+    	socket.on("updateList", (data)=>{
+    		data.data.map((player)=>{
+    // 			let dummyPlayer = {name: player.name, rank: player.rank}
+				// testPlayer.push(dummyPlayer)
+				dummyPlayer = {name: player.name, rank: player.rank};
+				testPlayer.push(dummyPlayer);
+    		})
+    		this.setState({
+					players: testPlayer
+			});
+    		testPlayer = [];
+    	});
 	}
+
+	// 	componentDidMount(){
+	// 	let testPlayer = [];
+	// 	fetch('http://localhost:8080/getPlayers')
+	// 	.then(res => res.json())
+	// 	.then(json => {
+	// 		json.players.map((person)=>{
+	// 			let dummyPlayer= {name: person.name, rank: person.rank}
+	// 			testPlayer.push(dummyPlayer)
+	// 		})
+
+	// 		this.setState({
+	// 			players: testPlayer
+	// 		})
+	// 	});
+
+	// }
 
 	handleLoginRender(){
 		this.setState({
@@ -74,7 +97,7 @@ class Main extends React.Component{
 		return(
 			<div class="MainContainer">
 				<SlidingCarousel messages={messages}/>
-				<ListContainer currentPlayer={this.state.currentPlayer}/>
+				<ListContainer players={this.state.players} CurrentPlayer={this.state.currentPlayer}/>
 				<LRC_Container onLogout = {this.handleLogout} onLogin={this.handleLoginRender}/>
 			</div>
 		);
@@ -158,6 +181,7 @@ class LogoutChallengeWinContainer extends React.Component{
 		this.state = {
 			stateNum: 0
 		}
+
 		this.handleLogout = 
 		this.handleLogout.bind(this);
 
@@ -172,6 +196,10 @@ class LogoutChallengeWinContainer extends React.Component{
 
 		this.handleMisclick = 
 		this.handleMisclick.bind(this);
+	}
+
+	componentDidMount(){
+		/* Make API Call to know state to display */
 	}
 
 	handleFinishMatch(){
@@ -203,9 +231,6 @@ class LogoutChallengeWinContainer extends React.Component{
 		this.setState(() => ({
 			stateNum: this.state.stateNum - 1
 		}))
-	}
-	handleFinishMatch(){
-
 	}
 
 	render(){
