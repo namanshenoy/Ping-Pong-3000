@@ -53,8 +53,7 @@ const updatePlayerLists = async socket => {
 
                 res = playersObj
             } else {
-                const res = await
-
+                const res = 
                 fetch('http://localhost:8080/getPlayers')
                     .then(response => response.json())
                     .then(players => {
@@ -70,7 +69,6 @@ const updatePlayerLists = async socket => {
         socket.emit('updatePlayers', 
         res.players)
         })
-
 }
 
 io.on('connection', socket => {

@@ -1,27 +1,14 @@
-const express = require('express')
-const http = require('http')
-const socketio = require('socket.io')
-const fetch = require('node-fetch')
 const redis = require('redis')
-
-const port = process.env.PORT || 4001
-
-// access redis mini-database
-const client = redis.createClient()
-
-const app = express()
-
-const server = http.createServer(app)
-
-const io = socketio(server)
-
+const fetch = require('node-fetch')
+var client = redis.createClient()
 const playerRedisKey = 'players_'
 
+client.hset(playerRedisKey, 'test key', '{"test": "val"}', redis.print)
+
 const updateList = async () => {
-    const playersObj = {"players" : [ ] }
 
-    const data = await client.hgetall(playerRedisKey, (err, players) => {
-
+    const playersObj = { "players" : [ ] }
+	const val = await client.hgetall(playerRedisKey, (err, players) => {
 		if(!players) {
             console.log('Using cache')
 
@@ -48,25 +35,16 @@ const updateList = async () => {
             fetchPlayers().then(x=> console.log('logging after fetchPlayer ',x))
 
 		}
-    } )
-    return data
+	}
+
+	)
+
+	if(val) {
+		console.log('I have value!')
+	} else {
+		console.log('Darn, there\'s nothing here!')
+	}
+	return val
 }
 
-
-io.on('connection', socket => {
-    console.log('New client connected')
-    updateList()
-    socket.on('disconnect', () => console.log('Client disconnected'))
-})
-
-
-
-client.on('error', (err) => {
-    console.log('Error ' + err)
-})
-
-
-
-server.listen(port, () => {
-    console.log(`Socket listening on port ${port}`)
-})
+console.log('return value for uL ' , updateList().then(x => console.log(x)))
