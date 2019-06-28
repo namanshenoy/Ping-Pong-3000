@@ -3,7 +3,7 @@ const express = require('express')
 const app = express()
 
 app.get('/getPlayers', (req, res) => {
-    var cameronSamplePlayers = { "players" : [ 
+    const cameronSamplePlayers = { "players" : [ 
         {
             "name" : "joe",
             "id" : 1,
@@ -48,7 +48,7 @@ app.get('/getPlayers', (req, res) => {
 
     ]}
 
-    var samplePlayers = {
+    const samplePlayers = {
         "players" : [
             {"name":"cam", "id":2},
             {"name": "max", "id":1},
