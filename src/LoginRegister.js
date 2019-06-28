@@ -61,8 +61,6 @@ class LoginRegisterContainer extends React.Component{
 
 	render(){
 
-		console.log("HI" + localStorage.getItem('currentPlayerEmail'));
-
 		let form;
 		if(this.state.tryLogin == true){
 			form = <Login tryLogin={this.tryLogin} error={this.state.loginError}/>
