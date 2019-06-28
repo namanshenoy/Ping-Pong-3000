@@ -35,9 +35,7 @@ const updateList = async () => {
             fetchPlayers().then(x=> console.log('logging after fetchPlayer ',x))
 
 		}
-	}
-
-	)
+	})
 
 	if(val) {
 		console.log('I have value!')

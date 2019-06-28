@@ -1,1 +1,12 @@
 
+Event: updateList
+Description: Send updated playerList to front-end
+response: Json list (email, username, rank)
+
+Event: isChallenged
+Description: front-end will ask backend if email is in a challenge
+Response: true/false
+
+
+
+

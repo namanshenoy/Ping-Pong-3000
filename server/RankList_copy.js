@@ -60,7 +60,7 @@ socket.on("updatePlayers", data => {
 
 	render(){
 		return(
-			<div class="ListContainer">
+			<div className="ListContainer">
 				<RankList currentPlayer={this.props.currentPlayer} players={this.state.players} />
 			</div>
 		);
@@ -75,7 +75,7 @@ class RankList extends React.Component{
 
 	render(){
 		return(
-		<div class='wrap-table-scroll-y'>
+		<div className='wrap-table-scroll-y'>
 			<Table striped bordered hover variant="dark">
 			  <thead>
 			    <tr>
