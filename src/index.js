@@ -6,7 +6,7 @@ import SlidingCarousel from './SlidingCarousel';
 import ListContainer from './RankList';
 import Button from 'react-bootstrap/Button';
 import LoginRegisterContainer from './LoginRegister'
-
+import axios from 'axios'
 import socketIOClient from "socket.io-client";
 
 //
@@ -28,10 +28,11 @@ class Main extends React.Component{
 		super(props)
 		this.state = {
 			response: false,
-			currentPlayer: localStorage.getItem('currentPlayer'),
+			currentPlayerEmail: localStorage.getItem('currentPlayerEmail'),
 			endpoint: "http://127.0.0.1:4001",
 			socket: socketIOClient('http://127.0.0.1:4000'),
-			players: []
+			players: [],
+			isChallenged: false
 		}
 
 		this.handleLoginRender = 
@@ -41,16 +42,45 @@ class Main extends React.Component{
 		this.handleLogout.bind(this);
 	}
 
-	componentDidMount(){
+	componentDidMount(){		
+
 		let playerArray = [];
 		let testPlayer = [];
 		const endpoint = this.state.endpoint;
     	const socket = this.state.socket;
-    	let dummyPlayer;
+
+    	/* if they are logged in, i.e. have an email stored, check if they are challenged */
+    	if(this.state.currentPlayerEmail != null){
+	    	axios.post('http://localhost:4000/isChallenged', 
+							{
+								email: this.state.currentPlayerEmail
+							}
+				)
+				.then((r) => {
+					this.setState({
+						isChallenged: r.data.isChallenged
+					})
+				})
+				.catch(e => console.error(e))
+		}
+   
+   		let dummyPlayer;
+    	socket.on("connection", (data)=>{
+    		data.data.map((player)=>{
+    			if(player.email == this.state.currentPlayerEmail){
+    				console.log("PLAYER MATCH");
+    			}
+				dummyPlayer = {name: player.name, rank: player.rank};
+				testPlayer.push(dummyPlayer);
+    		})
+    		this.setState({
+					players: testPlayer
+			});
+    		testPlayer = [];
+    	});
+    	
     	socket.on("updateList", (data)=>{
     		data.data.map((player)=>{
-    // 			let dummyPlayer = {name: player.name, rank: player.rank}
-				// testPlayer.push(dummyPlayer)
 				dummyPlayer = {name: player.name, rank: player.rank};
 				testPlayer.push(dummyPlayer);
     		})
@@ -61,43 +91,27 @@ class Main extends React.Component{
     	});
 	}
 
-	// 	componentDidMount(){
-	// 	let testPlayer = [];
-	// 	fetch('http://localhost:8080/getPlayers')
-	// 	.then(res => res.json())
-	// 	.then(json => {
-	// 		json.players.map((person)=>{
-	// 			let dummyPlayer= {name: person.name, rank: person.rank}
-	// 			testPlayer.push(dummyPlayer)
-	// 		})
-
-	// 		this.setState({
-	// 			players: testPlayer
-	// 		})
-	// 	});
-
-	// }
-
 	handleLoginRender(){
 		this.setState({
-			currentPlayer: localStorage.getItem('currentPlayer')
+			currentPlayerEmail: localStorage.getItem('currentPlayerEmail')
 		})
-		console.log(this.state.currentPlayer);
+		console.log(this.state.currentPlayerEmail);
 	}
 
 	handleLogout(){
+		console.log("upper log out");
 		this.setState({
-			currentPlayer: localStorage.getItem('currentPlayer')
+			currentPlayerEmail: null
 		})
 	}
 
 	render(){
-		    const response= this.state.response;
-		    console.log(response);
+		console.log(this.state.isChallenged);
 		return(
 			<div class="MainContainer">
+				<div>{this.state.currentPlayerEmail}</div>
 				<SlidingCarousel messages={messages}/>
-				<ListContainer players={this.state.players} CurrentPlayer={this.state.currentPlayer}/>
+				<ListContainer players={this.state.players} CurrentPlayerEmail={this.state.currentPlayerEmail}/>
 				<LRC_Container onLogout = {this.handleLogout} onLogin={this.handleLoginRender}/>
 			</div>
 		);
@@ -132,13 +146,14 @@ class LRC_Container extends React.Component{
 
 	}
 
-	handleSuccesfulLogin(){
+	handleSuccesfulLogin(email){
 		this.setState({
 			isLoggedIn: true
 		});
 		localStorage.setItem('isLoggedIn', true);
 		/* Somehow set the name here from API response */
-		localStorage.setItem('currentPlayer', 'Clementine Bauch');
+		localStorage.setItem('currentPlayerEmail', email);
+		console.log(email);
 		this.props.onLogin();
 	}
 
@@ -147,19 +162,22 @@ class LRC_Container extends React.Component{
 			isLoggedIn: false
 		});
 		localStorage.setItem('isLoggedIn', false);
-		localStorage.setItem('currentPlayer', null);
+		localStorage.setItem('currentPlayerEmail', null);
 		this.props.onLogout();
 	}
 
 	render(){
-		const isLoggedIn = this.state.isLoggedIn;
-		
+		let isLoggedIn = this.state.isLoggedIn;
+		if(localStorage.getItem('currentPlayerEmail') == null){
+			console.log(localStorage.getItem('currentPlayerEmail'));
+			isLoggedIn = true;
+			console.log('called');
+		}
+
 		let functionalBar;
 
 		if(!isLoggedIn){
 			functionalBar = 
-			/* this prop is passed in just to test, it is
-			auto logging in, no API interaction */
 			<LoginRegisterContainer onLogin={this.handleSuccesfulLogin}/>
 
 		} else {
@@ -219,6 +237,7 @@ class LogoutChallengeWinContainer extends React.Component{
 			isLoggedIn: false
 		});
 		localStorage.setItem('isLoggedIn', false);
+		localStorage.setItem('currentPlayerEmail', null);
 	}
 
 	handleChallenge(){
