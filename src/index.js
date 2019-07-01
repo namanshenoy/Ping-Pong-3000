@@ -48,39 +48,16 @@ class Main extends React.Component{
 		let testPlayer = [];
 		const endpoint = this.state.endpoint;
     	const socket = this.state.socket;
-
-    	/* if they are logged in, i.e. have an email stored, check if they are challenged */
-    	if(this.state.currentPlayerEmail != null){
-	    	axios.post('http://localhost:4000/isChallenged', 
-							{
-								email: this.state.currentPlayerEmail
-							}
-				)
-				.then((r) => {
-					this.setState({
-						isChallenged: r.data.isChallenged
-					})
-				})
-				.catch(e => console.error(e))
-		}
    
    		let dummyPlayer;
-    	socket.on("connection", (data)=>{
-    		data.data.map((player)=>{
-    			if(player.email == this.state.currentPlayerEmail){
-    				console.log("PLAYER MATCH");
-    			}
-				dummyPlayer = {name: player.name, rank: player.rank};
-				testPlayer.push(dummyPlayer);
-    		})
-    		this.setState({
-					players: testPlayer
-			});
-    		testPlayer = [];
-    	});
     	
     	socket.on("updateList", (data)=>{
     		data.data.map((player)=>{
+    			console.log(player.email);
+    			console.log(this.state.currentPlayerEmail);
+    			if(player.email == this.state.currentPlayerEmail){
+    				this.setState({isChallenged: player.isChallenged});
+    			}
 				dummyPlayer = {name: player.name, rank: player.rank};
 				testPlayer.push(dummyPlayer);
     		})
@@ -153,7 +130,6 @@ class LRC_Container extends React.Component{
 		localStorage.setItem('isLoggedIn', true);
 		/* Somehow set the name here from API response */
 		localStorage.setItem('currentPlayerEmail', email);
-		console.log(email);
 		this.props.onLogin();
 	}
 
