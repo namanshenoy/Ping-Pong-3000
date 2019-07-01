@@ -8,7 +8,7 @@ const redis = require('redis')
 const axios = require('axios')
 const bodyParser = require('body-parser')
  
-const port = process.env.PORT || 4001
+const port = process.env.PORT || 4000
 
 // access redis mini-database
 const client = redis.createClient()
@@ -50,22 +50,25 @@ const fetchPlayers = async () => {
 
 const updateList = async () => {
     console.log('updating list')
-    const playersObj = {"players" : [ ] }
+    const playersObj = {"data" : [ ] }
 
     const data = await client.hgetall(playerRedisKey, (err, players) => {
 
-		if(!players) {
+		if(players) {
             console.log('Using cache')
 
             for(let player in players) {
                 let pPlayer = JSON.parse(players[player])
-                playersObj.players.push({"name":pPlayer['name'], "rank":pPlayer['rank'], "challenged":pPlayer['challenged']})
+                playersObj.data.push({"name":pPlayer['name'], "rank":pPlayer['rank'], "challenged":pPlayer['challenged']})
             }
+
+            console.log('returning playersObj ' , playersObj)
+            io.emit('updateList', playersObj)
             return playersObj
 		} else {
             fetchPlayers().then(data=> { 
-                console.log('sending data',data)
-                io.emit('updateList', data.players)
+                console.log('sending data',playersObj)
+                io.emit('updateList', playersObj)
         })
 		}
     } )
@@ -77,10 +80,6 @@ const updateList = async () => {
 io.on('connection', socket => {
     console.log('New client connected')  
     updateList()
-    // socket.on('addPlayer', (player, fn) => {
-    //     console.log(player)
-    //     addPlayer(player, fn)
-    // })
 
     socket.on('disconnect', () => console.log('Client disconnected'))
 })
