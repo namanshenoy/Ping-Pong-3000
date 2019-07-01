@@ -15,7 +15,7 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-      - backend
+      # - backend
     command: npm run dev
 
 
@@ -43,10 +43,10 @@ services:
     expose:
       - "6379"
 
-  backend:
-    image: maxbartnitski/backend
-    ports:
-      - "8080:8080"
+  # backend:
+  #   image: maxbartnitski/backend
+  #   ports:
+  #     - "8080:8080"
 
   # mongo:
   #   image: mongo
