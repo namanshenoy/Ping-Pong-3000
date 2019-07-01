@@ -48,40 +48,16 @@ class Main extends React.Component{
 		let testPlayer = [];
 		const endpoint = this.state.endpoint;
     	const socket = this.state.socket;
-
-    	/* if they are logged in, i.e. have an email stored, check if they are challenged */
-    	if(this.state.currentPlayerEmail != null){
-	    	axios.post('http://localhost:4000/isChallenged', 
-							{
-								email: this.state.currentPlayerEmail
-							}
-				)
-				.then((r) => {
-					this.setState({
-						isChallenged: r.data.isChallenged
-					})
-				})
-				.catch(e => console.error(e))
-		}
    
    		let dummyPlayer;
-    	socket.on("connection", (data)=>{
-    		data.data.map((player)=>{
-    			if(player.email == this.state.currentPlayerEmail){
-    				console.log("PLAYER MATCH");
-    			}
-				dummyPlayer = {name: player.name, rank: player.rank};
-				testPlayer.push(dummyPlayer);
-    		})
-    		this.setState({
-					players: testPlayer
-			});
-    		testPlayer = [];
-    	});
     	
     	socket.on("updateList", (data)=>{
+    		console.log(data.data);
     		data.data.map((player)=>{
-				dummyPlayer = {name: player.name, rank: player.rank};
+    			if(player.email == this.state.currentPlayerEmail){
+    				this.setState({isChallenged: player.inMatch});
+    			}
+				dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: player.inMatch};
 				testPlayer.push(dummyPlayer);
     		})
     		this.setState({
@@ -91,9 +67,10 @@ class Main extends React.Component{
     	});
 	}
 
-	handleLoginRender(){
+	handleLoginRender(bool){
 		this.setState({
-			currentPlayerEmail: localStorage.getItem('currentPlayerEmail')
+			currentPlayerEmail: localStorage.getItem('currentPlayerEmail'),
+			isChallenged: bool
 		})
 		console.log(this.state.currentPlayerEmail);
 	}
@@ -106,13 +83,19 @@ class Main extends React.Component{
 	}
 
 	render(){
-		console.log(this.state.isChallenged);
+		console.log("isChallenged: " + this.state.isChallenged);
 		return(
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
+				<div>{this.state.isChallenged.toString()}</div>
 				<SlidingCarousel messages={messages}/>
-				<ListContainer players={this.state.players} CurrentPlayerEmail={this.state.currentPlayerEmail}/>
-				<LRC_Container onLogout = {this.handleLogout} onLogin={this.handleLoginRender}/>
+				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
+
+				<LRC_Container currentPlayerEmail={this.state.currentPlayerEmail} 
+				isChallenged = {this.state.isChallenged}
+				onLogout = {this.handleLogout} 
+				onLogin={this.handleLoginRender}/>
+
 			</div>
 		);
 	}
@@ -122,10 +105,18 @@ class Main extends React.Component{
 /* LOGIN REGSTER CHALLENGE */
 class LRC_Container extends React.Component{
 
+	componentWillReceiveProps({currentPlayerEmail, isChallenged}) {
+  		this.setState({currentPlayerEmail: currentPlayerEmail,
+  				       isChallenged: isChallenged
+  		})
+	}
+
 	constructor(props){
 		super(props);
 		this.state = {
-			isLoggedIn: false
+			isLoggedIn: false,
+			isChallenged: props.isChallenged,
+			currentPlayerEmail: props.currentPlayerEmail
 		}
 		this.handleSuccesfulLogin = 
 		this.handleSuccesfulLogin.bind(this);
@@ -146,20 +137,21 @@ class LRC_Container extends React.Component{
 
 	}
 
-	handleSuccesfulLogin(email){
+	handleSuccesfulLogin(email, bool){
 		this.setState({
-			isLoggedIn: true
+			isLoggedIn: true,
+			isChallenged: bool
 		});
 		localStorage.setItem('isLoggedIn', true);
 		/* Somehow set the name here from API response */
 		localStorage.setItem('currentPlayerEmail', email);
-		console.log(email);
-		this.props.onLogin();
+		this.props.onLogin(bool);
 	}
 
 	handleLogout(){
 		this.setState({
-			isLoggedIn: false
+			isLoggedIn: false,
+			isChallenged: false
 		});
 		localStorage.setItem('isLoggedIn', false);
 		localStorage.setItem('currentPlayerEmail', null);
@@ -167,12 +159,8 @@ class LRC_Container extends React.Component{
 	}
 
 	render(){
+
 		let isLoggedIn = this.state.isLoggedIn;
-		if(localStorage.getItem('currentPlayerEmail') == null){
-			console.log(localStorage.getItem('currentPlayerEmail'));
-			isLoggedIn = true;
-			console.log('called');
-		}
 
 		let functionalBar;
 
@@ -182,7 +170,10 @@ class LRC_Container extends React.Component{
 
 		} else {
 			functionalBar = 
-			<LogoutChallengeWinContainer logout={this.handleLogout}/>
+			<LogoutChallengeWinContainer 
+			isChallenged={this.state.isChallenged} 
+			currentPlayerEmail={this.state.currentPlayerEmail}
+			logout={this.handleLogout} />
 		}
 
 		return(
@@ -193,6 +184,19 @@ class LRC_Container extends React.Component{
 }
 
 class LogoutChallengeWinContainer extends React.Component{
+
+	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
+  		this.setState({
+  			isChallenged: isChallenged,
+  			currentPlayerEmail: currentPlayerEmail
+  		})
+  		if(isChallenged){
+  			/* Do not display challenge container if already in a challenge */
+  			if(this.state.stateNum == 0){
+  				this.setState({stateNum: 1});
+  			}
+  		}
+	}
 
 	constructor(props){
 		super(props);
@@ -241,6 +245,24 @@ class LogoutChallengeWinContainer extends React.Component{
 	}
 
 	handleChallenge(){
+
+		/* Attempt to initiate challene with this player */
+		axios.post('http://localhost:4000/challenge', 
+						{
+							email: this.state.currentPlayerEmail
+						}
+		)
+		.then((r) => {
+			/* Either the login was succesful, or it failed */
+			let success = r.data.success;
+			if(!success){
+				/* Display Error Message to User */
+			} else {
+				/* Challenge Value will become true, handled by updateList */
+			}
+		})
+		.catch(e => console.error(e))
+
 		this.setState(() => ({
 			stateNum: this.state.stateNum + 1
 		}))
