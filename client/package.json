@@ -10,10 +10,7 @@
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
     "redis": "^2.8.0",
-<<<<<<< HEAD
-=======
     "socket.io": "^2.2.0",
->>>>>>> 733b43d27933dde350cfa5a59e33181c352a5a48
     "socket.io-client": "^2.2.0"
   },
   "scripts": {
