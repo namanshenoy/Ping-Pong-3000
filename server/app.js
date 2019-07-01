@@ -10,8 +10,9 @@ const bodyParser = require('body-parser')
  
 const port = process.env.PORT || 4000
 
+
 // access redis mini-database
-const client = redis.createClient()
+const client = redis.createClient("redis://redis:6379")
 
 const app = express()
 
