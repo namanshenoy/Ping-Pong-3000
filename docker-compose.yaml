@@ -4,37 +4,34 @@ services:
   #  SETUP NODE CONTAINER
   server:
     environment:
-      - APP_SERVER_PORT=8000
+      # - API_HOST=http://localhost:3000/
+      # - APP_SERVER_PORT=8000
       # - REACT_APP_PORT=4000
     build: ./server
     expose:
-      # - ${APP_SERVER_PORT}
-      - "8000"
+      - "4000"
     ports:
-      # - ${APP_SERVER_PORT}:${APP_SERVER_PORT}
-      - "8000:8000"
+      - "4000:4000"
     depends_on:
       - redis
-      # - backend
+      - backend
     command: npm run dev
 
 
 ## SETUP CLIENT CONTAINER
   client: 
     build: ./client 
-    environment:
-      # - API_HOST=http://localhost:3000/
-      # - APP_SERVER_PORT=8000
-      - REACT_APP_PORT=4000
+    # environment:
+    #   - API_HOST=http://localhost:3000/
+    #   - APP_SERVER_PORT=8000
+    #   - REACT_APP_PORT=5000
     expose:
-      # - ${REACT_APP_PORT}
-      - "4000"
+      - "5000"
     ports:
-      # - ${REACT_APP_PORT}:${REACT_APP_PORT}
-      - "4000:4000"
+      - "5000:5000"
     links:
       - server
-    command: npm run start
+    command: npm run docker
 
   redis:
     image: redis
@@ -43,12 +40,12 @@ services:
     expose:
       - "6379"
 
-  # backend:
-  #   image: maxbartnitski/backend
-  #   ports:
-  #     - "8080:8080"
+  backend:
+    image: maxbartnitski/backend
+    ports:
+      - "8080:8080"
 
-  # mongo:
-  #   image: mongo
-  #   ports:
-  #     - "27017:27017"
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"

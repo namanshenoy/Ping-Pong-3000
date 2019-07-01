@@ -15,4 +15,4 @@ COPY package-lock.json /app/client
 RUN npm install
 
 COPY . /app/client
-CMD ["npm", "start"]
+CMD ["npm", "docker"]

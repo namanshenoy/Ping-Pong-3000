@@ -4,7 +4,7 @@ const http = require('http')
 const socketio = require('socket.io')
 const redis = require('redis')
 
-
+const cors = require('cors')
 const axios = require('axios')
 const bodyParser = require('body-parser')
 
@@ -15,6 +15,8 @@ const port = process.env.PORT || 4000
 const client = redis.createClient("redis://redis:6379")
 
 const app = express()
+
+app.use(cors())
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -39,7 +41,8 @@ setPlayerNum(true)
 const fetchPlayers = async () => {
 
     const playersObj = { "data": [] }
-    const res = await axios.get('http://localhost:8080/getPlayers')
+    console.log("fetchPlayers")
+    const res = await axios.get('backend://backend:8080/getPlayers')
         .then(players => {
             console.log('players : ' , players, players.data.players)
             players.data.players.forEach(e => {
@@ -107,7 +110,7 @@ client.on('error', (err) => {
  *                                      BEGIN ENDPOINTS
 */
 
-app.post('/addPlayer', (req, res) => {
+app.post('/register', (req, res) => {
     console.log('adding player')
     const resp = addPlayerCall(req, res)
 
@@ -145,8 +148,8 @@ async function addPlayerCall(req, res) {
     try {
         // ensure numPlayers is set
         await checkNumPlayers()
-
-        await axios.post('http://localhost:8080/addPlayer',
+        console.log("getNumPlayers")
+        await axios.post('backend://backend:8080/addPlayer',
             req.body
         ).then((resp) => {
             console.log('added player')
@@ -171,7 +174,7 @@ async function delPlayerCall(req, res) {
         // ensure numPlayers is set
         await checkNumPlayers()
 
-        await axios.post('http://localhost:8080/deletePlayer',
+        await axios.post('backend://backend:8080/deletePlayer',
             req.body
             ).then( (resp) => {
                 console.log('deleted player')
@@ -225,7 +228,8 @@ async function setPlayerNum(reset) {
 }
 
 async function getNumPlayersAPI() {
-    return await axios.get('http://localhost:8080/getPlayers')
+    console.log("getNumPlayers")
+    return await axios.get('backend://backend:8080/getPlayers')
     .then((players) => {
         const numPlayers = parseInt( players.data.players.length )
         return numPlayers
