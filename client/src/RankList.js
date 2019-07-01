@@ -52,7 +52,7 @@ class RankList extends React.Component{
 	render(){
 		return(
 		<div class='wrap-table-scroll-y'>
-			<Table striped bordered hover variant="dark">
+			<Table striped bordered hover>
 			  <thead>
 			    <tr>
 			      <th>Rank</th>

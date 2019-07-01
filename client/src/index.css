@@ -5,7 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: rgba(254,20,54,.9);
+  background-color: rgb(200, 216, 217);
 }
 
 code {
@@ -33,6 +33,7 @@ code {
 
 .wrap-table-scroll-y{
 	display: block;
+	background-color: rgb(227, 239, 240);
 }
 
 .ListContainer {
