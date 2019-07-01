@@ -78,7 +78,8 @@ class Main extends React.Component{
 	handleLogout(){
 		console.log("upper log out");
 		this.setState({
-			currentPlayerEmail: null
+			currentPlayerEmail: null,
+			isChallenged: false
 		})
 	}
 
@@ -188,13 +189,16 @@ class LogoutChallengeWinContainer extends React.Component{
 	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
   		this.setState({
   			isChallenged: isChallenged,
-  			currentPlayerEmail: currentPlayerEmail
+  			currentPlayerEmail: currentPlayerEmail,
+  			error: null
   		})
   		if(isChallenged){
   			/* Do not display challenge container if already in a challenge */
   			if(this.state.stateNum == 0){
   				this.setState({stateNum: 1});
   			}
+  		} else {
+  			this.setState({stateNum: 0});
   		}
 	}
 
@@ -225,9 +229,24 @@ class LogoutChallengeWinContainer extends React.Component{
 	}
 
 	handleFinishMatch(){
-		this.setState(() => ({
-			stateNum: this.state.stateNum + 1
-		}))
+
+		/* Attempt to end the match */
+		axios.post('http://localhost:4000/concludeMatch', 
+						{
+							email: this.state.currentPlayerEmail
+						}
+		)
+		.then((r) => {
+			/* Either the login was succesful, or it failed */
+			let success = r.data.success;
+			if(success == null){
+				this.setState({error: r.data.error});
+			} else {
+				//the match concluded
+				this.setState({stateNum: 0});
+			}
+		})
+		.catch(e => console.error(e))
 	}
 
 	handleConfirmChallenge(){
@@ -246,8 +265,8 @@ class LogoutChallengeWinContainer extends React.Component{
 
 	handleChallenge(){
 
-		/* Attempt to initiate challene with this player */
-		axios.post('http://localhost:4000/challenge', 
+		/* Attempt to initiate challene involving this player */
+		axios.post('http://localhost:4000/challengePlayer', 
 						{
 							email: this.state.currentPlayerEmail
 						}
@@ -255,17 +274,21 @@ class LogoutChallengeWinContainer extends React.Component{
 		.then((r) => {
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
-			if(!success){
+			if(success == null || success == undefined){
 				/* Display Error Message to User */
+				this.setState({
+					error: 'ERROR'
+				})
 			} else {
 				/* Challenge Value will become true, handled by updateList */
+				this.setState(() => ({
+					stateNum: this.state.stateNum + 1
+				}))
 			}
 		})
 		.catch(e => console.error(e))
 
-		this.setState(() => ({
-			stateNum: this.state.stateNum + 1
-		}))
+
 	}
 
 	handleMisclick(){
@@ -289,9 +312,12 @@ class LogoutChallengeWinContainer extends React.Component{
 		}
 
 		return (
-		<div class="logchallButtonsContainer">
-			{button}
-			<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
+		<div class='challengeErrorContainer'>
+			<div class="logchallButtonsContainer">
+				{button}
+				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
+			</div>
+			<div> {this.state.error} </div>
 		</div>
 		)
 	}
