@@ -12,8 +12,8 @@ const port = process.env.PORT || 4000
 
 
 // access redis mini-database
-// const client = redis.createClient("redis://redis:6379")
-const client = redis.createClient();
+const client = redis.createClient("redis://redis:6379")
+// const client = redis.createClient();
 
 const app = express();
 
@@ -306,7 +306,7 @@ async function loginPlayerCall(req, res) {
   console.log("logging in player with email", req.body.email);
 
   try {
-    await axios.post("http://localhost:8080/login", req.body).then(resp => {
+    await axios.post("backend://backend:8080/login", req.body).then(resp => {
       console.log("logged in player");
       res.status(200).json(resp.data);
     });
@@ -323,7 +323,7 @@ async function challengePlayerCall(req, res) {
   console.log("challenging player with email ");
   try {
     await axios
-      .post("http://localhost:8080/challengePlayer", req.body)
+      .post("backend://backend:8080/challengePlayer", req.body)
       .then(resp => {
         console.log("added player");
         res.status(200).json(resp.data);
