@@ -5,14 +5,17 @@ import Table from 'react-bootstrap/Table';
 /* Simulating API CALL here */
 class ListContainer extends React.Component{
 
-	componentWillReceiveProps({players}) {
-  		this.setState({players: players})
+	componentWillReceiveProps({players, currentPlayerEmail}) {
+  		this.setState({players: players,
+  					   currentPlayerEmail: currentPlayerEmail
+  			})
 	}
 
 	constructor(props){
 		super(props)
 		this.state = {
-			players: this.props.players
+			players: this.props.players,
+			currentPlayerEmail: props.currentPlayerEmail
 		}
 	}
 
@@ -24,7 +27,7 @@ class ListContainer extends React.Component{
 	render(){
 		return(
 			<div class="ListContainer">
-				<RankList currentPlayer={this.props.currentPlayer} players={this.state.players} />
+				<RankList currentPlayerEmail={this.state.currentPlayerEmail} players={this.state.players} />
 			</div>
 		);
 	}
@@ -34,12 +37,22 @@ class RankList extends React.Component{
 
 	constructor(props){
 		super(props);
+		this.state = {
+			players: props.players,
+			currentPlayerEmail: props.currentPlayerEmail
+		}
+	}
+
+	componentWillReceiveProps({currentPlayerEmail, players}) {
+  		this.setState({players: players,
+  					   currentPlayerEmail: currentPlayerEmail
+  			})
 	}
 
 	render(){
 		return(
 		<div class='wrap-table-scroll-y'>
-			<Table striped bordered hover variant="dark">
+			<Table striped bordered hover>
 			  <thead>
 			    <tr>
 			      <th>Rank</th>
@@ -47,7 +60,7 @@ class RankList extends React.Component{
 			    </tr>
 			  </thead>
 			  <tbody>
-			  	{this.GenerateList(this.props.players, this.props.currentPlayer)}
+			  	{this.GenerateList(this.state.players, this.state.currentPlayerEmail)}
 			  </tbody>
 			</Table>
 		</div>
@@ -67,13 +80,13 @@ class RankList extends React.Component{
 	// 	)
 	// }
 
-	GenerateList(array, currentPlayer){
-		let name = currentPlayer;
+	GenerateList(array, currentPlayerEmail){
+		let email = currentPlayerEmail;
 		let res = [];
 		array.map((player)=>
 			
 			{
-				if(name!==player.name){
+				if(email!==player.email){
 				res.push(<tr>
 				<td> {player.rank} </td>
 				<td> {player.name} </td>

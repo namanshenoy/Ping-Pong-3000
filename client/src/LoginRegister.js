@@ -24,7 +24,7 @@ class LoginRegisterContainer extends React.Component{
 		const user_email = event.target.elements[1].value;
 		const user_password = event.target.elements[2].value;
 
-		axios.post('http://localhost:4000/register', 
+		axios.post('http://localhost:4000/addPlayer', 
 						{
 							player: user_display,
 							email: user_email,
