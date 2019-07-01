@@ -1,0 +1,114 @@
+import React from 'react';
+import Table from 'react-bootstrap/Table';
+
+
+/* Simulating API CALL here */
+class ListContainer extends React.Component{
+
+	componentWillReceiveProps({players, currentPlayerEmail}) {
+  		this.setState({players: players,
+  				       currentPlayerEmail: currentPlayerEmail
+  		})
+	}
+
+	constructor(props){
+		super(props)
+		this.state = {
+			players: this.props.players
+		}
+	}
+
+
+	componentDidMount(){
+
+	}
+
+	render(){
+
+		return(
+			<div class="ListContainer">
+				<RankList currentPlayerEmail={this.state.currentPlayerEmail} players={this.state.players} />
+			</div>
+		);
+	}
+}
+
+class RankList extends React.Component{
+
+	componentWillReceiveProps({players, currentPlayerEmail}) {
+  		this.setState({players: players,
+  				       currentPlayerEmail: currentPlayerEmail
+  		})
+	}
+
+	constructor(props){
+		super(props);
+		this.state = {
+			players: props.players,
+			currentPlayerEmail: props.currentPlayerEmail
+		}
+	}
+
+	render(){
+		let players = this.state.players;
+		let currentPlayerEmail = this.state.currentPlayerEmail;
+		return(
+		<div class='wrap-table-scroll-y'>
+			<Table striped bordered hover variant="dark">
+			  <thead>
+			    <tr>
+			      <th>Rank</th>
+			      <th>Name</th>
+			    </tr>
+			  </thead>
+			  <tbody>
+			  	{this.GenerateList(players, currentPlayerEmail)}
+			  </tbody>
+			</Table>
+		</div>
+		);
+	}
+
+	// GenerateList(array, currentPlayer){
+	// 	console.log(currentPlayer);
+	// 	let name = currentPlayer;
+	// 	return array.map((player)=>
+	// 		<tr>
+
+	// 			<td> {player.rank} </td>
+	// 			<td> {player.name} </td>
+
+	// 		</tr>
+	// 	)
+	// }
+
+	GenerateList(array, currentPlayerEmail){
+		console.log(array);
+		let email = currentPlayerEmail;
+		let res = [];
+		console.log("GENERATE: " + email);
+		array.map((player)=>
+			{
+				console.log(player.email);
+				if(email!==player.email){
+					res.push(<tr>
+					<td> {player.rank} </td>
+					<td> {player.name} </td>
+					</tr>)
+				} else {
+					res.push(<tr>
+					<td className="currentPlayer"> {player.rank} </td>
+					<td className="currentPlayer"> {player.name} </td>
+					</tr>)
+				}
+			}
+		)
+
+
+		return res;
+	}
+}
+
+
+
+export default ListContainer;
