@@ -134,12 +134,11 @@ app.post("/deletePlayer", (req, res) => {
 app.post("/challengePlayer", (req, res) => {
   console.log("inMatch player ", req.body);
   challengePlayerCall(req, res);
-  res.json({ return: "value" });
 });
 
 app.post("/concludeMatch", (req, res) => {
   console.log("concluding match", req.body);
-  res.json({ return: "value" });
+  concludeMatch(req, res);
 });
 
 app.post("/isChallenged", (req, res) => {
@@ -300,7 +299,6 @@ async function addPlayerToRedis(jsonBody, rank) {
 
 async function loginPlayerCall(req, res) {
   console.log("logging in player with email", req.body.email);
-
   try {
     await axios.post("http://localhost:8080/login", req.body).then(resp => {
       console.log("logged in player");
@@ -313,10 +311,6 @@ async function loginPlayerCall(req, res) {
 }
 
 async function challengePlayerCall(req, res) {
-    console.log('challenger ',  'body ', req.body, 'data ', req.data)
-  if (req.body.challenger) {
-
-  console.log("challenging player with email ");
   try {
     await axios
       .post("http://localhost:8080/challengePlayer", req.body)
@@ -325,46 +319,88 @@ async function challengePlayerCall(req, res) {
         res.status(200).json(resp.data);
       });
 
-    const challenger = req.body.challenger;
-    const challenged = req.body.email;
-
-    console.log('setting in match for ', challenger, 'and ', challenged)
-
-    await setInMatch(challenger);
-    await setInMatch(challenged);
+    await client.hget(playerRedisKey, req.body.email, (err, res) => {
+      const targetRank = parseInt(JSON.parse(res.rank)) - 1;
+      setInMatchRank(targetRank);
+    });
+    await setInMatch(req.body.email);
     updateList();
   } catch (e) {
     console.log("ERROR: ", e.response.data);
     res.status(400).json(e.response.data);
   }
-  
-  } else {
-    res
-      .status(400)
-      .json({ error: 'Provide challenger email in field "challenger"' });
-    return;
-}
 }
 
-async function setMatch(jsonBody, truth_val){
-    console.log('setting player ', jsonBody['email'])
-    jsonBody['inMatch'] = truth_val
-    await client.hset(playerRedisKey, jsonBody['email'], JSON.stringify(jsonBody), (err, resp) => {
-        console.log('RESP: ', resp, 'ERR: ', err)
-    })
+async function concludeMatch(req, res) {
+  try {
+    await axios
+      .post("http://localhost:8080/concludeMatch", req.body)
+      .then(resp => {
+        console.log("concluded match");
+        res.status(200).json(resp.data);
+      });
+    await client.hget(playerRedisKey, req.body.email, async (err, res) => {
+      const targetRank = parseInt(JSON.parse(res.rank)) - 1;
+      await setOutMatchRank(targetRank);
+      await setInMatch(req.body.email);
+      updateList();
+    });
+  } catch (e) {}
+}
+
+async function setInMatchRank(rank) {
+  await setMatchRank(rank, true);
+}
+
+async function setOutMatchRank(rank) {
+  await setMatchRank(rank, false);
+}
+
+async function setMatchRank(rank, truth_value) {
+  console.log("setting player with rank ", rank, " in match");
+  await client.hgetall(playerRedisKey, async (err, players) => {
+    for (let player in players) {
+      let pPlayer = JSON.parse(players[player]);
+      let rRank = parseInt(pPlayer["rank"]);
+      if (rRank === rank) {
+        pPlayer["inMatch"] = truth_value;
+        await client.hset(
+          playerRedisKey,
+          pPlayer["email"],
+          JSON.stringify(pPlayer),
+          (err, res) => {
+            console.log("RES: ", res, "ERR: ", err);
+          }
+        );
+      }
+    }
+  });
+}
+
+async function setMatch(jsonBody, truth_val) {
+  console.log("setting player ", jsonBody["email"]);
+  jsonBody["inMatch"] = truth_val;
+  await client.hset(
+    playerRedisKey,
+    jsonBody["email"],
+    JSON.stringify(jsonBody),
+    (err, resp) => {
+      console.log("RESP: ", resp, "ERR: ", err);
+    }
+  );
 }
 
 async function setInMatch(email) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-    setMatch(json, true)
+    setMatch(json, true);
   });
 }
 
 async function setOutMatch(email) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-    setMatch(json, false)
+    setMatch(json, false);
   });
 }
 
