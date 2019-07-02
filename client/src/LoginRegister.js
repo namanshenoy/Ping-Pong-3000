@@ -67,6 +67,7 @@ class LoginRegisterContainer extends React.Component{
 						}
 		)
 		.then((r) => {
+
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			if(!success){

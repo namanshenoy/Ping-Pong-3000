@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Carousel from 'react-bootstrap/Carousel';
+import Alert from 'react-bootstrap/Alert';
+import ProgressBar from 'react-bootstrap/ProgressBar';
 import logo from './Images/front.jpg';
 import SlidingCarousel from './SlidingCarousel';
 import ListContainer from './RankList';
@@ -93,6 +95,7 @@ class Main extends React.Component{
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
 				<div>{isChallenged.toString()}</div>
+				<div><button className = "deleteButton"> Delete Account </button></div>
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
 
@@ -333,7 +336,7 @@ class LogoutChallengeWinContainer extends React.Component{
 				{button}
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
-			<MyChallenger />
+			<MyChallenger currentPlayerEmail={this.state.currentPlayerEmail}/>
 			<div> {this.state.error} </div>
 		</div>
 		)
@@ -341,9 +344,27 @@ class LogoutChallengeWinContainer extends React.Component{
 }
 
 class MyChallenger extends React.Component {
+
+
+	constructor(props){
+		super(props);
+		this.state = {
+			currentPlayerEmail: null
+		}
+	}
+
+	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
+	  	this.setState({
+	  		currentPlayerEmail: currentPlayerEmail
+	  	})
+	}
+
 	render(){
 		return(
-			<h1>hi</h1>
+			<div class="alertContainer">
+				<Alert variant="primary" className="myAlert"> You are currently scheduled to play:  </Alert>
+				<ProgressBar animated now={45} />
+			</div>
 		);
 	}
 }
