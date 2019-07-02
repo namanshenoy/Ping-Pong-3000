@@ -349,7 +349,8 @@ class MyChallenger extends React.Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			currentPlayerEmail: null
+			currentPlayerEmail: null,
+			otherPlayer: null
 		}
 	}
 
@@ -357,14 +358,46 @@ class MyChallenger extends React.Component {
 	  	this.setState({
 	  		currentPlayerEmail: currentPlayerEmail
 	  	})
+	 }
+
+	componentDidMount(){
+
+		/* Attempt to end the match */
+		axios.post('http://localhost:4000/inMatch', 
+						{
+							email: this.state.currentPlayerEmail
+						}
+		)
+		.then((r) => {
+			console.log(r);
+			/* Either they were in a challenge or they were not */
+			let inMatch = r.data.inMatch;
+			if(inMatch){
+				this.setState({
+					otherPlayer: r.data.email
+				})
+			} else {
+				this.setState({
+					otherPlayer: null
+				})
+			}
+		})
+		.catch(e => console.error(e))
 	}
 
 	render(){
-		return(
+		let email = this.state.currentPlayerEmail;
+		let result;
+		if(email!==null){
+			 result = (
 			<div class="alertContainer">
-				<Alert variant="primary" className="myAlert"> You are currently scheduled to play:  </Alert>
-				<ProgressBar animated now={45} />
+				<Alert variant="primary" className="myAlert"> You are currently scheduled to play: </Alert>
 			</div>
+			)
+		}
+
+		return(
+			<div> {result} </div>
 		);
 	}
 }
