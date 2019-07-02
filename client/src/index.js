@@ -16,8 +16,9 @@ import * as serviceWorker from './serviceWorker';
 /* Simulates request for messages */
 
 const messages = [
-{title: 'Champion!', message: 'Beth wins 4th of July Tourny!'},
-{title: "Losers!", message: 'Max on 15 game losing streak!'}
+{title: "Want your message here?", message: 'Venmo @SalVerduzco'},
+{title: 'Oracle Ping Pong Rankings', message: 'Sell sell sell!'},
+{title: "End Date", message: 'Tournament ends 20th of July'}
 ];
 
 
@@ -84,11 +85,14 @@ class Main extends React.Component{
 	}
 
 	render(){
-		console.log("isChallenged: " + this.state.isChallenged);
+		let isChallenged = this.state.isChallenged;
+		if(isChallenged == null || isChallenged==undefined){
+			isChallenged = false;
+		}
 		return(
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
-				<div>{this.state.isChallenged.toString()}</div>
+				<div>{isChallenged.toString()}</div>
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
 
@@ -230,6 +234,8 @@ class LogoutChallengeWinContainer extends React.Component{
 
 	handleFinishMatch(){
 
+		console.log("trying to finish match");
+
 		/* Attempt to end the match */
 		axios.post('http://localhost:4000/concludeMatch', 
 						{
@@ -237,6 +243,7 @@ class LogoutChallengeWinContainer extends React.Component{
 						}
 		)
 		.then((r) => {
+			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			
@@ -267,12 +274,14 @@ class LogoutChallengeWinContainer extends React.Component{
 	handleChallenge(){
 
 		/* Attempt to initiate challene involving this player */
+		console.log("sending to: " + this.state.currentPlayerEmail);
 		axios.post('http://localhost:4000/challengePlayer', 
 						{
 							email: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
+			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			if(success == null || success == undefined){
@@ -287,7 +296,12 @@ class LogoutChallengeWinContainer extends React.Component{
 				}))
 			}
 		})
-		.catch(e => console.error(e))
+		.catch(e => {
+			this.setState({
+				error: e.response.data.error
+			})
+			console.log(e.response.data.error);
+		})
 
 
 	}

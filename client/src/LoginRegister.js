@@ -33,6 +33,8 @@ class LoginRegisterContainer extends React.Component{
 		)
 		.then((r) => {
 			/* Either the register was succesful, or it failed */
+			console.log("Trying register:")
+			console.log(r);
 			let success = r.data.success;
 			if(!success){
 				this.setState({registerError: r.data.error});
@@ -41,7 +43,12 @@ class LoginRegisterContainer extends React.Component{
 				this.loginClick();
 			}
 		})
-		.catch(e => console.error(e))
+		.catch(e => {
+			this.setState({
+				registerError: e.response.data.error
+			})
+			console.log(e.response.data.error);
+		})
 
 		event.target.elements[0].value = '';
 		event.target.elements[1].value = '';
@@ -68,7 +75,12 @@ class LoginRegisterContainer extends React.Component{
 				this.props.onLogin(user_email, r.data.inMatch);
 			}
 		})
-		.catch(e => console.error(e))
+		.catch(e => {
+			this.setState({
+				loginError: e.response.data.error
+			})
+			console.log(e.response.data.error);
+		})
 
 		event.target.elements[0].value = '';
 		event.target.elements[1].value = '';
@@ -138,7 +150,7 @@ class Login extends React.Component {
 		return(
 		
 		<div class="dummy">
-			<div> {this.state.errorMessage} </div>
+			<div className="errorMessages"> {this.state.errorMessage} </div>
 			<Form className = "myForms" onSubmit={e => this.handleSubmit(e)}>
 			    <Form.Group controlId="formBasicEmail">
 				    <Form.Label>Email address</Form.Label>
@@ -180,7 +192,7 @@ class Register extends React.Component {
 		return (
 
 		<div class="dummy">
-		<div> {this.state.errorMessage} </div>
+		<div classname="errorMessages"> {this.state.errorMessage} </div>
 		<Form className="myForms" onSubmit={e => this.handleSubmit(e)}>
 		    <Form.Group controlId="formBasicDisplayName">
 			    <Form.Label>Display Name</Form.Label>
