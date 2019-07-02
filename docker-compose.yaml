@@ -7,7 +7,7 @@ services:
       # - API_HOST=http://localhost:3000/
       # - APP_SERVER_PORT=8000
       # - REACT_APP_PORT=4000
-    image: maxbartnitski/server:v1
+    image: maxbartnitski/server:v3
     # build: ./server
     expose:
       - "4000"
@@ -21,7 +21,7 @@ services:
 
 ## SETUP CLIENT CONTAINER
   client: 
-    image: maxbartnitski/client:v1
+    image: maxbartnitski/client:v3
     # build: ./client 
     # environment:
     #   - API_HOST=http://localhost:3000/
@@ -43,7 +43,7 @@ services:
       - "6379"
 
   backend:
-    image: maxbartnitski/backend
+    image: maxbartnitski/backend:v3
     ports:
       - "8080:8080"
     expose:
