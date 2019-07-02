@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Carousel from 'react-bootstrap/Carousel';
+import Alert from 'react-bootstrap/Alert';
+import ProgressBar from 'react-bootstrap/ProgressBar';
 import logo from './Images/front.jpg';
 import SlidingCarousel from './SlidingCarousel';
 import ListContainer from './RankList';
@@ -16,8 +18,9 @@ import * as serviceWorker from './serviceWorker';
 /* Simulates request for messages */
 
 const messages = [
-{title: 'Champion!', message: 'Beth wins 4th of July Tourny!'},
-{title: "Losers!", message: 'Max on 15 game losing streak!'}
+{title: "Want your message here?", message: 'Venmo @SalVerduzco'},
+{title: 'Oracle Ping Pong Rankings', message: 'Sell sell sell!'},
+{title: "End Date", message: 'Tournament ends 20th of July'}
 ];
 
 
@@ -84,11 +87,15 @@ class Main extends React.Component{
 	}
 
 	render(){
-		console.log("isChallenged: " + this.state.isChallenged);
+		let isChallenged = this.state.isChallenged;
+		if(isChallenged == null || isChallenged==undefined){
+			isChallenged = false;
+		}
 		return(
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
-				<div>{this.state.isChallenged.toString()}</div>
+				<div>{isChallenged.toString()}</div>
+				<div><button className = "deleteButton"> Delete Account </button></div>
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
 
@@ -230,6 +237,8 @@ class LogoutChallengeWinContainer extends React.Component{
 
 	handleFinishMatch(){
 
+		console.log("trying to finish match");
+
 		/* Attempt to end the match */
 		axios.post('http://localhost:4000/concludeMatch', 
 						{
@@ -237,8 +246,10 @@ class LogoutChallengeWinContainer extends React.Component{
 						}
 		)
 		.then((r) => {
+			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
+			
 			if(success == null){
 				this.setState({error: r.data.error});
 			} else {
@@ -266,18 +277,21 @@ class LogoutChallengeWinContainer extends React.Component{
 	handleChallenge(){
 
 		/* Attempt to initiate challene involving this player */
+		console.log("sending to: " + this.state.currentPlayerEmail);
 		axios.post('http://localhost:4000/challengePlayer', 
 						{
-							email: this.state.currentPlayerEmail
+							challenger: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
+			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			if(success == null || success == undefined){
 				/* Display Error Message to User */
+				console.log(r);
 				this.setState({
-					error: 'ERROR'
+					error: r.data.error
 				})
 			} else {
 				/* Challenge Value will become true, handled by updateList */
@@ -286,7 +300,12 @@ class LogoutChallengeWinContainer extends React.Component{
 				}))
 			}
 		})
-		.catch(e => console.error(e))
+		.catch(e => {
+			this.setState({
+				error: e.response.data.error
+			})
+			console.log(e.response.data.error);
+		})
 
 
 	}
@@ -317,11 +336,39 @@ class LogoutChallengeWinContainer extends React.Component{
 				{button}
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
+			<MyChallenger currentPlayerEmail={this.state.currentPlayerEmail}/>
 			<div> {this.state.error} </div>
 		</div>
 		)
 	}
 }
+
+class MyChallenger extends React.Component {
+
+
+	constructor(props){
+		super(props);
+		this.state = {
+			currentPlayerEmail: null
+		}
+	}
+
+	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
+	  	this.setState({
+	  		currentPlayerEmail: currentPlayerEmail
+	  	})
+	}
+
+	render(){
+		return(
+			<div class="alertContainer">
+				<Alert variant="primary" className="myAlert"> You are currently scheduled to play:  </Alert>
+				<ProgressBar animated now={45} />
+			</div>
+		);
+	}
+}
+
 
 
 

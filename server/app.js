@@ -338,7 +338,7 @@ async function challengePlayerCall(req, res) {
 async function concludeMatch(req, res) {
   try {
     await axios
-      .post("http://localhost:8080/concludeMatch", req.body)
+      .post("backend://backend:8080/concludeMatch", req.body)
       .then(resp => {
         console.log("concluded match");
         res.status(200).json(resp.data);

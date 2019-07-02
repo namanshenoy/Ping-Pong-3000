@@ -67,19 +67,6 @@ class RankList extends React.Component{
 		);
 	}
 
-	// GenerateList(array, currentPlayer){
-	// 	console.log(currentPlayer);
-	// 	let name = currentPlayer;
-	// 	return array.map((player)=>
-	// 		<tr>
-
-	// 			<td> {player.rank} </td>
-	// 			<td> {player.name} </td>
-
-	// 		</tr>
-	// 	)
-	// }
-
 	GenerateList(array, currentPlayerEmail){
 		let email = currentPlayerEmail;
 		let res = [];

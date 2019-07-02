@@ -72,7 +72,7 @@ code {
 }
 
 .currentPlayer{
-	background-color: green;
+	background-color: rgb(122, 235, 125);
 }
 
 .dummy{
@@ -80,6 +80,36 @@ code {
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
+}
+
+.challengeErrorContainer{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+}
+
+.alertContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+}
+
+.barTest{
+	background-color: blue;
+}
+
+.errorMessages{
+	color:red;
+}
+
+.deleteButton{
+
+}
+
+.myAlert {
+	margin-top: 50px;
 }
 
 
