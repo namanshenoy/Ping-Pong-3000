@@ -29,8 +29,8 @@ class Main extends React.Component{
 		this.state = {
 			response: false,
 			currentPlayerEmail: localStorage.getItem('currentPlayerEmail'),
-			endpoint: "http://127.0.0.1:4001",
-			socket: socketIOClient('http://127.0.0.1:4000'),
+			endpoint: "http://localhost:4000",
+			socket: socketIOClient('http://localhost:4000'),
 			players: [],
 			isChallenged: false
 		}
@@ -333,7 +333,7 @@ ReactDOM.render(<Main />, document.getElementById('root'));
 serviceWorker.unregister();
 
 	/*
-		axios.get('http://localhost:3000/getPlayers')(
+		axios.get('http://server:3000/getPlayers')(
 					.then(data => {
 	
 					}))
