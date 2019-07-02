@@ -277,7 +277,7 @@ class LogoutChallengeWinContainer extends React.Component{
 		console.log("sending to: " + this.state.currentPlayerEmail);
 		axios.post('http://localhost:4000/challengePlayer', 
 						{
-							email: this.state.currentPlayerEmail
+							challenger: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
@@ -286,8 +286,9 @@ class LogoutChallengeWinContainer extends React.Component{
 			let success = r.data.success;
 			if(success == null || success == undefined){
 				/* Display Error Message to User */
+				console.log(r);
 				this.setState({
-					error: 'ERROR'
+					error: r.data.error
 				})
 			} else {
 				/* Challenge Value will become true, handled by updateList */
@@ -332,11 +333,21 @@ class LogoutChallengeWinContainer extends React.Component{
 				{button}
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
+			<MyChallenger />
 			<div> {this.state.error} </div>
 		</div>
 		)
 	}
 }
+
+class MyChallenger extends React.Component {
+	render(){
+		return(
+			<h1>hi</h1>
+		);
+	}
+}
+
 
 
 
