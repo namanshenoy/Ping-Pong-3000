@@ -43,6 +43,10 @@ class LoginRegisterContainer extends React.Component{
 		})
 		.catch(e => console.error(e))
 
+		event.target.elements[0].value = '';
+		event.target.elements[1].value = '';
+		event.target.elements[2].value = '';
+
 	}
 
 	tryLogin(event){
@@ -65,6 +69,9 @@ class LoginRegisterContainer extends React.Component{
 			}
 		})
 		.catch(e => console.error(e))
+
+		event.target.elements[0].value = '';
+		event.target.elements[1].value = '';
 
 
 	}
