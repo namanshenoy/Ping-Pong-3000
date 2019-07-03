@@ -1,0 +1,12 @@
+go to client directory
+
+docker build -t maxbartnitski/client:v3 .
+
+docker push maxbartnitski/client
+
+go to main ping-pong-3000 directory
+find docker-compose.yaml file
+
+change maxbartnitski/client:v2 -> v3 or whatever version you pushed
+
+docker-compose up

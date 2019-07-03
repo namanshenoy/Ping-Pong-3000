@@ -57,7 +57,7 @@ class Main extends React.Component{
     	socket.on("updateList", (data)=>{
     		console.log(data.data);
     		data.data.map((player)=>{
-    			if(player.email == this.state.currentPlayerEmail){
+    			if(player.email === this.state.currentPlayerEmail){
     				this.setState({isChallenged: player.inMatch});
     			}
 				dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: player.inMatch};
@@ -86,16 +86,39 @@ class Main extends React.Component{
 		})
 	}
 
+	handleDelete(){
+
+		axios.post('http://localhost:4000/deletePlayer', 
+						{
+							email: this.state.currentPlayerEmail
+						}
+		)
+		.then((r) => {
+			console.log(r);
+			/* Either the login was succesful, or it failed */
+			let success = r.data.SUCCESS;
+			
+			if(success === null){
+				this.setState({error: r.data.error});
+			} else {
+				//account deleted
+				this.handleLogout();	
+			}
+		})
+		.catch(e => console.error(e))
+
+	}
+
 	render(){
 		let isChallenged = this.state.isChallenged;
-		if(isChallenged == null || isChallenged==undefined){
+		if(isChallenged === null || isChallenged === undefined){
 			isChallenged = false;
 		}
 		return(
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
 				<div>{isChallenged.toString()}</div>
-				<div><button className = "deleteButton"> Delete Account </button></div>
+				<div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
 
@@ -136,7 +159,7 @@ class LRC_Container extends React.Component{
 
 	componentDidMount(){
 		let bool = false;
-		if(localStorage.getItem('isLoggedIn')==="true"){
+		if(localStorage.getItem('isLoggedIn') === "true"){
 			bool = true;
 		}
 		this.setState({
@@ -201,7 +224,7 @@ class LogoutChallengeWinContainer extends React.Component{
   		})
   		if(isChallenged){
   			/* Do not display challenge container if already in a challenge */
-  			if(this.state.stateNum == 0){
+  			if(this.state.stateNum === 0){
   				this.setState({stateNum: 1});
   			}
   		} else {
@@ -250,7 +273,7 @@ class LogoutChallengeWinContainer extends React.Component{
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			
-			if(success == null){
+			if(success === null){
 				this.setState({error: r.data.error});
 			} else {
 				//the match concluded
@@ -287,7 +310,7 @@ class LogoutChallengeWinContainer extends React.Component{
 			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
-			if(success == null || success == undefined){
+			if(success === null || success === undefined){
 				/* Display Error Message to User */
 				console.log(r);
 				this.setState({
@@ -319,11 +342,11 @@ class LogoutChallengeWinContainer extends React.Component{
 	render(){
 		let button;
 
-		if(this.state.stateNum == 0){
+		if(this.state.stateNum === 0){
 			button = <Button onClick = {this.handleChallenge} className="ChallengeButton" variant="warning">Challenge!</Button>
-		} else if(this.state.stateNum == 1){
+		} else if(this.state.stateNum === 1){
 			button = <Button onClick = {this.handleConfirmChallenge}variant="outline-warning">Click Here Only If You Won The Match</Button>
-		} else if(this.state.stateNum == 2){
+		} else if(this.state.stateNum === 2){
 			button = <div>
 					 <Button onClick={this.handleMisclick} variant="danger">Go Back</Button> 
 					 <Button onClick={this.handleFinishMatch} variant = "success">Yes, I won!</Button>
