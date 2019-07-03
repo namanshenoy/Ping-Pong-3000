@@ -7,13 +7,12 @@ const redis = require("redis");
 const cors = require('cors')
 const axios = require('axios')
 const bodyParser = require('body-parser')
-axios.defaults.headers.post['Content-Type'] = 'application/json';
 
 const port = process.env.PORT || 4000
 
 
 // access redis mini-database
-const client = redis.createClient()
+const client = redis.createClient("redis://redis:6379")
 // const client = redis.createClient();
 
 const app = express();
@@ -39,12 +38,12 @@ setPlayerNum(true);
  *                                      BEGIN SOCKET CONNECTIONS
  */
 
-async function fetchPlayers() {
+const fetchPlayers = async () => {
   const playersObj = { data: [] };
   const res = await axios
-    .get("http://localhost:8080/getPlayers")
+    .get("backend://backend:8080/getPlayers")
     .then(players => {
-      console.log("players : ", players.data.players);
+      console.log("players : ", players, players.data.players);
       players.data.players.forEach(e => {
         playersObj.data.push({
           name: e.name,
@@ -54,8 +53,7 @@ async function fetchPlayers() {
         client.hset(playerRedisKey, e.email, JSON.stringify(e));
       });
 
-      const len = players.players ? players.players.length : 0
-      client.set("numPlayers", len)
+      client.set("numPlayers", players.players.length);
       return playersObj;
     });
   return res;
@@ -92,12 +90,12 @@ async function updateList() {
       io.emit("updateList", playersObj);
     } else {
       fetchPlayers().then(data => {
-        console.log("sending data", data);
+        console.log("sending data", playersObj);
 
         playersObj.data.sort((x, y) => {
           return x.rank - y.rank;
         });
-        io.emit("updateList", data);
+        io.emit("updateList", playersObj);
       });
     }
   });
@@ -142,17 +140,6 @@ app.post("/challengePlayer", (req, res) => {
   challengePlayerCall(req, res);
 });
 
-app.get('/getPlayers', async (req, res) => {
-  console.log('getting players')
-  try {
-    await axios.get('http://localhost:8080/getPlayers').then(resp => {
-      res.status(200).json(resp.data)
-    })
-  } catch (e) {
-    console.log('ERR:', e)
-  }
-})
-
 app.post("/concludeMatch", (req, res) => {
   console.log("concluding match", req.body);
   concludeMatch(req, res);
@@ -171,7 +158,7 @@ app.post("/inMatch", (req, res) => {
 
 async function forwardInMatch(req, res) {
   try {
-    await axios.post('http://localhost:8080/inMatch', req.body).then(resp => {
+    await axios.post('backend://backend:8080/inMatch', req.body).then(resp => {
       console.log('replying with data', resp.data)
       res.status(200).json(resp.data)
     })
@@ -179,8 +166,8 @@ async function forwardInMatch(req, res) {
     console.log("ERROR: ", e.response.data);
     res.status(400).json(e.response.data);
   }
-
-
+    
+ 
 }
 
 async function addPlayerCall(req, res) {
@@ -188,7 +175,7 @@ async function addPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post("http://localhost:8080/addPlayer", req.body).then(resp => {
+    await axios.post("backend://backend:8080/addPlayer", req.body).then(resp => {
       console.log("added player");
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
@@ -212,7 +199,7 @@ async function delPlayerCall(req, res) {
     await checkNumPlayers();
 
     await axios
-      .post("http://localhost:8080/deletePlayer", req.body)
+      .post("backend://backend:8080/deletePlayer", req.body)
       .then(resp => {
         console.log("deleted player");
         res.status(200).json(resp.data);
@@ -266,7 +253,7 @@ async function setPlayerNum(reset) {
 }
 
 async function getNumPlayersAPI() {
-  return await axios.get("http://localhost:8080/getPlayers").then(players => {
+  return await axios.get("backend://backend:8080/getPlayers").then(players => {
     const numPlayers = parseInt(players.data.players.length);
     return numPlayers;
   });
@@ -280,13 +267,11 @@ async function deletePlayerFromRedis(jsonBody) {
     jsonBody.email
   );
   await client.hget(playerRedisKey, jsonBody.email, (err, resp) => {
-    if (resp) {
-      const json = JSON.parse(resp);
-      console.log("getting player rank from ", json);
-      const targetRank = parseInt(json.rank);
-      console.log("target rank is ", targetRank);
-      updateRanks(targetRank);
-    }
+    const json = JSON.parse(resp);
+    console.log("getting player rank from ", json);
+    const targetRank = parseInt(json.rank);
+    console.log("target rank is ", targetRank);
+    updateRanks(targetRank);
   });
   await client.hdel(playerRedisKey, jsonBody.email, (err, resp) => {
     console.log("DELETING PLAYER FROM REDIS RESP: ", resp, "ERR: ", err);
@@ -339,7 +324,7 @@ async function addPlayerToRedis(jsonBody, rank) {
 async function loginPlayerCall(req, res) {
   console.log("logging in player with email", req.body.email);
   try {
-    await axios.post("http://localhost:8080/login", req.body).then(resp => {
+    await axios.post("backend://backend:8080/login", req.body).then(resp => {
       console.log("logged in player");
       res.status(200).json(resp.data);
     });
@@ -352,14 +337,14 @@ async function loginPlayerCall(req, res) {
 async function challengePlayerCall(req, res) {
   try {
     await axios
-      .post("http://localhost:8080/challengePlayer", req.body)
+      .post("backend://backend:8080/challengePlayer", req.body)
       .then(resp => {
         console.log("added player");
         res.status(200).json(resp.data);
       });
 
     await client.hget(playerRedisKey, req.body.email, (err, res) => {
-      console.log('RES:', res)
+      console.log('RES:' , res)
       const targetRank = parseInt(JSON.parse(res).rank) - 1;
       setInMatchRank(targetRank);
     });
@@ -371,57 +356,45 @@ async function challengePlayerCall(req, res) {
   }
 }
 
-// TODO swap player ranks
 async function concludeMatch(req, res) {
   try {
-    console.log('*************concluding match************')
+    console.log('concluding match')
     await axios
-      .post("http://localhost:8080/concludeMatch", req.body)
+      .post("backend://backend:8080/concludeMatch", req.body)
       .then(resp => {
-        console.log("concluded match -- data is : ", resp.data);
+        console.log("concluded match -- data is : " , resp.data);
         res.status(200).json(resp.data);
-        console.log('success message ' + resp.data.success)
-        if (resp.data && resp.data.success.includes('swap')) {
-          // update ranks
-          updatePlayerRanks(req)
-        }
+        console.log(resp.data.success)
+
       });
-  } catch (e) { }
-}
-
-async function updatePlayerRanks(req) {
-
-  await client.hget(playerRedisKey, req.body.email, (err, res) => {
-    console.log('response here is ', res)
-    if (res) {
+    await client.hget(playerRedisKey, req.body.email, (err, res) => {
+      console.log('response here is ', res)
+      if(res) {
       const targetRank = parseInt(JSON.parse(res).rank) - 1;
-      setOutMatchRankSetRank(targetRank, targetRank + 1);
-      setOutMatchSetRank(req.body.email, targetRank);
-    }
-    updateList();
-  });
+      setOutMatchRank(targetRank);
+      }
+      setInMatch(req.body.email);
+      updateList();
+    });
+  } catch (e) {}
 }
-
 
 async function setInMatchRank(rank) {
-  await setMatchRankSetRank(rank, true, null);
+  await setMatchRank(rank, true);
 }
 
-async function setOutMatchRankSetRank(rank, target) {
-  await setMatchRankSetRank(rank, false, target);
+async function setOutMatchRank(rank) {
+  await setMatchRank(rank, false);
 }
 
-async function setMatchRankSetRank(rank, truth_value, target) {
-  console.log("setting player with rank ", rank, " in match to target rank ", target);
+async function setMatchRank(rank, truth_value) {
+  console.log("setting player with rank ", rank, " in match");
   await client.hgetall(playerRedisKey, async (err, players) => {
     for (let player in players) {
       let pPlayer = JSON.parse(players[player]);
       let rRank = parseInt(pPlayer["rank"]);
       if (rRank === rank) {
         pPlayer.inMatch = truth_value;
-        if (target) {
-          pPlayer.rank = target;
-        }
         await client.hset(
           playerRedisKey,
           pPlayer.email,
@@ -435,12 +408,9 @@ async function setMatchRankSetRank(rank, truth_value, target) {
   });
 }
 
-async function setMatchSetRank(jsonBody, truth_val, rank) {
+async function setMatch(jsonBody, truth_val) {
   console.log("setting player ", jsonBody["email"]);
   jsonBody["inMatch"] = truth_val;
-  if(rank){
-    jsonBody["rank"] = rank
-  }
   await client.hset(
     playerRedisKey,
     jsonBody["email"],
@@ -448,21 +418,20 @@ async function setMatchSetRank(jsonBody, truth_val, rank) {
     (err, resp) => {
       console.log("RESP: ", resp, "ERR: ", err);
     }
-     );
+  );
 }
 
 async function setInMatch(email) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-    setMatchSetRank(json, true, null);
+    setMatch(json, true);
   });
 }
 
-async function setOutMatchSetRank(email, rank) {
+async function setOutMatch(email) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-    console.log('setting rank of ' , json, 'to ', rank)
-    setMatchSetRank(json, false, rank);
+    setMatch(json, false);
   });
 }
 
