@@ -38,6 +38,9 @@ class Main extends React.Component{
 			isChallenged: false
 		}
 
+		this.handleDelete = 
+		this.handleDelete.bind(this);
+
 		this.handleLoginRender = 
 		this.handleLoginRender.bind(this);
 
@@ -84,6 +87,8 @@ class Main extends React.Component{
 			currentPlayerEmail: null,
 			isChallenged: false
 		})
+		localStorage.setItem('isLoggedIn', false);
+		localStorage.setItem('currentPlayerEmail', null);
 	}
 
 	handleDelete(){
@@ -102,6 +107,7 @@ class Main extends React.Component{
 				this.setState({error: r.data.error});
 			} else {
 				//account deleted
+				console.log("DELETE CALLED");
 				this.handleLogout();	
 			}
 		})
@@ -110,18 +116,25 @@ class Main extends React.Component{
 	}
 
 	render(){
+		console.log("THE CURRENT isChallenged: " + this.state.isChallenged.toString());
 		let isChallenged = this.state.isChallenged;
 		if(isChallenged === null || isChallenged === undefined){
 			isChallenged = false;
+
 		}
+
+		let deleteButton = null;
+		if(this.state.currentPlayerEmail != null && this.state.currentPlayerEmail != "null"){
+			deleteButton = <div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
+		}
+
 		return(
 			<div class="MainContainer">
 				<div>{this.state.currentPlayerEmail}</div>
 				<div>{isChallenged.toString()}</div>
-				<div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
+				{deleteButton}
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
-
 				<LRC_Container currentPlayerEmail={this.state.currentPlayerEmail} 
 				isChallenged = {this.state.isChallenged}
 				onLogout = {this.handleLogout} 
@@ -158,13 +171,7 @@ class LRC_Container extends React.Component{
 	}
 
 	componentDidMount(){
-		let bool = false;
-		if(localStorage.getItem('isLoggedIn') === "true"){
-			bool = true;
-		}
-		this.setState({
-			isLoggedIn: bool
-		});
+
 
 	}
 
@@ -182,7 +189,7 @@ class LRC_Container extends React.Component{
 	handleLogout(){
 		this.setState({
 			isLoggedIn: false,
-			isChallenged: false
+			isChallenged: false 
 		});
 		localStorage.setItem('isLoggedIn', false);
 		localStorage.setItem('currentPlayerEmail', null);
@@ -190,10 +197,20 @@ class LRC_Container extends React.Component{
 	}
 
 	render(){
-
-		let isLoggedIn = this.state.isLoggedIn;
+		
+		let currentEmail = this.state.currentPlayerEmail;
+		console.log("CURRENT EMAIL:" + currentEmail);
 
 		let functionalBar;
+		let isLoggedIn = false;
+		if(currentEmail != "null" && currentEmail != null){
+			console.log(this.state.currentPlayerEmail);
+			console.log("I SHOULD NOT BE CALLED");
+			isLoggedIn = true;
+		}
+
+		
+
 
 		if(!isLoggedIn){
 			functionalBar = 
@@ -303,7 +320,7 @@ class LogoutChallengeWinContainer extends React.Component{
 		console.log("sending to: " + this.state.currentPlayerEmail);
 		axios.post('http://localhost:4000/challengePlayer', 
 						{
-							challenger: this.state.currentPlayerEmail
+							email: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
