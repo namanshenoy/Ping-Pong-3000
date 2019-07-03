@@ -21,7 +21,7 @@ services:
 
 ## SETUP CLIENT CONTAINER
   client: 
-    image: maxbartnitski/client:v3
+    image: maxbartnitski/client:v4
     # build: ./client 
     # environment:
     #   - API_HOST=http://localhost:3000/
@@ -43,7 +43,7 @@ services:
       - "6379"
 
   backend:
-    image: maxbartnitski/backend:v3
+    image: maxbartnitski/backend:v5
     ports:
       - "8080:8080"
     expose:

@@ -1,5 +1,4 @@
-/*jshint esversion: 6 */
-const express = require("express");
+/*jshint esversion: 6 */const express = require("express");
 const http = require("http");
 const socketio = require("socket.io");
 const redis = require("redis");
@@ -61,14 +60,14 @@ async function fetchPlayers() {
   return res;
 };
 
-async function updateList() {
+async function updateList(useCache) {
   console.log("updating list");
   const playersObj = { data: [] };
 
   const thisNumPlayers = await getNumPlayersAPI();
 
   const data = await client.hgetall(playerRedisKey, (err, players) => {
-    if (players && Object.keys(players).length === thisNumPlayers) {
+    if (players && Object.keys(players).length === thisNumPlayers && useCache) {
       console.log(
         "players length is ",
         Object.keys(players).length,
@@ -106,7 +105,7 @@ async function updateList() {
 
 io.on("connection", socket => {
   console.log("New client connected");
-  updateList();
+  updateList(true);
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
@@ -180,7 +179,6 @@ async function forwardInMatch(req, res) {
     res.status(400).json(e.response.data);
   }
 
-
 }
 
 async function addPlayerCall(req, res) {
@@ -221,7 +219,8 @@ async function delPlayerCall(req, res) {
       })
       .then(() => {
         console.log("starting to update list");
-        updateList();
+        // force reload of new player challenge status
+        updateList(false);
       });
   } catch (e) {
     console.log("ERROR: ", e.response.data);
@@ -314,7 +313,7 @@ async function updateRanks(target) {
         }
       }
       console.log("Finished upating ranks and updating list");
-      updateList();
+      updateList(true);
     }
   });
 }
@@ -333,7 +332,7 @@ async function addPlayerToRedis(jsonBody, rank) {
       console.log("ADDING PLAYER TO REDIS RESP: ", resp, "ERR: ", err);
     }
   );
-  updateList();
+  updateList(true);
 }
 
 async function loginPlayerCall(req, res) {
@@ -364,7 +363,7 @@ async function challengePlayerCall(req, res) {
       setInMatchRank(targetRank);
     });
     await setInMatch(req.body.email);
-    updateList();
+    updateList(true);
   } catch (e) {
     console.log("ERROR: ", e.response.data);
     res.status(400).json(e.response.data);
@@ -383,13 +382,37 @@ async function concludeMatch(req, res) {
         console.log('success message ' + resp.data.success)
         if (resp.data && resp.data.success.includes('swap')) {
           // update ranks
-          updatePlayerRanks(req)
+          swapPlayerRanks(req)
+        } else {
+          unsetPlayerChallenge(req)
         }
+        res.status(200).json(resp.data)
       });
-  } catch (e) { }
+  } catch (e) {
+    console.log('ERROR: ', e.response.data)
+    res.status(400).json(e.response.data);
+  }
 }
 
-async function updatePlayerRanks(req) {
+// winner on top
+async function unsetPlayerChallenge(req) {
+  if (req.body.email) {
+    await client.hget(playerRedisKey, req.body.email, (err, res) => {
+      console.log('unsetting player ', req.body.email)
+
+      if (res) {
+        const targetRank = parseInt(JSON.parse(res).rank) + 1
+        setOutMatchRankSetRank(targetRank, targetRank);
+        setOutMatchSetRank(req.body.email, targetRank - 1);
+      }
+      updateList(true)
+    })
+  } else {
+    console.log('ERROR: no player email provided')
+  }
+}
+
+async function swapPlayerRanks(req) {
 
   await client.hget(playerRedisKey, req.body.email, (err, res) => {
     console.log('response here is ', res)
@@ -398,7 +421,7 @@ async function updatePlayerRanks(req) {
       setOutMatchRankSetRank(targetRank, targetRank + 1);
       setOutMatchSetRank(req.body.email, targetRank);
     }
-    updateList();
+    updateList(true);
   });
 }
 
@@ -438,7 +461,7 @@ async function setMatchRankSetRank(rank, truth_value, target) {
 async function setMatchSetRank(jsonBody, truth_val, rank) {
   console.log("setting player ", jsonBody["email"]);
   jsonBody["inMatch"] = truth_val;
-  if(rank){
+  if (rank) {
     jsonBody["rank"] = rank
   }
   await client.hset(
@@ -448,7 +471,7 @@ async function setMatchSetRank(jsonBody, truth_val, rank) {
     (err, resp) => {
       console.log("RESP: ", resp, "ERR: ", err);
     }
-     );
+  );
 }
 
 async function setInMatch(email) {
@@ -461,7 +484,7 @@ async function setInMatch(email) {
 async function setOutMatchSetRank(email, rank) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-    console.log('setting rank of ' , json, 'to ', rank)
+    console.log('setting rank of ', json, 'to ', rank)
     setMatchSetRank(json, false, rank);
   });
 }

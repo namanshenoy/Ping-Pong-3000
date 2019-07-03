@@ -14,7 +14,6 @@ const port = process.env.PORT || 4000
 
 // access redis mini-database
 const client = redis.createClient("redis://redis:6379")
-// const client = redis.createClient();
 
 const app = express();
 
@@ -29,6 +28,7 @@ app.use(bodyParser.json());
 const server = http.createServer(app);
 
 const io = socketio(server);
+
 const playerRedisKey = "players_";
 
 // initialize redis
@@ -41,7 +41,7 @@ setPlayerNum(true);
 async function fetchPlayers() {
   const playersObj = { data: [] };
   const res = await axios
-    .get("backend://backend:8080/getPlayers")
+    .get("backend://:8080/getPlayers")
     .then(players => {
       console.log("players : ", players.data.players);
       players.data.players.forEach(e => {
@@ -60,14 +60,14 @@ async function fetchPlayers() {
   return res;
 };
 
-async function updateList() {
+async function updateList(useCache) {
   console.log("updating list");
   const playersObj = { data: [] };
 
   const thisNumPlayers = await getNumPlayersAPI();
 
   const data = await client.hgetall(playerRedisKey, (err, players) => {
-    if (players && Object.keys(players).length === thisNumPlayers) {
+    if (players && Object.keys(players).length === thisNumPlayers && useCache) {
       console.log(
         "players length is ",
         Object.keys(players).length,
@@ -105,7 +105,7 @@ async function updateList() {
 
 io.on("connection", socket => {
   console.log("New client connected");
-  updateList();
+  updateList(true);
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
@@ -144,7 +144,7 @@ app.post("/challengePlayer", (req, res) => {
 app.get('/getPlayers', async (req, res) => {
   console.log('getting players')
   try {
-    await axios.get('backend://backend:8080/getPlayers').then(resp => {
+    await axios.get('backend://:8080/getPlayers').then(resp => {
       res.status(200).json(resp.data)
     })
   } catch (e) {
@@ -170,7 +170,7 @@ app.post("/inMatch", (req, res) => {
 
 async function forwardInMatch(req, res) {
   try {
-    await axios.post('backend://backend:8080/inMatch', req.body).then(resp => {
+    await axios.post('backend://:8080/inMatch', req.body).then(resp => {
       console.log('replying with data', resp.data)
       res.status(200).json(resp.data)
     })
@@ -179,7 +179,6 @@ async function forwardInMatch(req, res) {
     res.status(400).json(e.response.data);
   }
 
-
 }
 
 async function addPlayerCall(req, res) {
@@ -187,7 +186,7 @@ async function addPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post("backend://backend:8080/addPlayer", req.body).then(resp => {
+    await axios.post("backend://:8080/addPlayer", req.body).then(resp => {
       console.log("added player");
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
@@ -211,7 +210,7 @@ async function delPlayerCall(req, res) {
     await checkNumPlayers();
 
     await axios
-      .post("backend://backend:8080/deletePlayer", req.body)
+      .post("backend://:8080/deletePlayer", req.body)
       .then(resp => {
         console.log("deleted player");
         res.status(200).json(resp.data);
@@ -220,7 +219,8 @@ async function delPlayerCall(req, res) {
       })
       .then(() => {
         console.log("starting to update list");
-        updateList();
+        // force reload of new player challenge status
+        updateList(false);
       });
   } catch (e) {
     console.log("ERROR: ", e.response.data);
@@ -265,7 +265,7 @@ async function setPlayerNum(reset) {
 }
 
 async function getNumPlayersAPI() {
-  return await axios.get("backend://backend:8080/getPlayers").then(players => {
+  return await axios.get("backend://:8080/getPlayers").then(players => {
     const numPlayers = parseInt(players.data.players.length);
     return numPlayers;
   });
@@ -283,6 +283,11 @@ async function deletePlayerFromRedis(jsonBody) {
       const json = JSON.parse(resp);
       console.log("getting player rank from ", json);
       const targetRank = parseInt(json.rank);
+      
+      // unset user above in match
+      if(targetRank > 1) {
+
+      }
       console.log("target rank is ", targetRank);
       updateRanks(targetRank);
     }
@@ -313,7 +318,7 @@ async function updateRanks(target) {
         }
       }
       console.log("Finished upating ranks and updating list");
-      updateList();
+      updateList(true);
     }
   });
 }
@@ -332,13 +337,13 @@ async function addPlayerToRedis(jsonBody, rank) {
       console.log("ADDING PLAYER TO REDIS RESP: ", resp, "ERR: ", err);
     }
   );
-  updateList();
+  updateList(true);
 }
 
 async function loginPlayerCall(req, res) {
   console.log("logging in player with email", req.body.email);
   try {
-    await axios.post("backend://backend:8080/login", req.body).then(resp => {
+    await axios.post("backend://:8080/login", req.body).then(resp => {
       console.log("logged in player");
       res.status(200).json(resp.data);
     });
@@ -351,7 +356,7 @@ async function loginPlayerCall(req, res) {
 async function challengePlayerCall(req, res) {
   try {
     await axios
-      .post("backend://backend:8080/challengePlayer", req.body)
+      .post("backend://:8080/challengePlayer", req.body)
       .then(resp => {
         console.log("added player");
         res.status(200).json(resp.data);
@@ -363,7 +368,7 @@ async function challengePlayerCall(req, res) {
       setInMatchRank(targetRank);
     });
     await setInMatch(req.body.email);
-    updateList();
+    updateList(true);
   } catch (e) {
     console.log("ERROR: ", e.response.data);
     res.status(400).json(e.response.data);
@@ -375,7 +380,7 @@ async function concludeMatch(req, res) {
   try {
     console.log('*************concluding match************')
     await axios
-      .post("backend://backend:8080/concludeMatch", req.body)
+      .post("backend://:8080/concludeMatch", req.body)
       .then(resp => {
         console.log("concluded match -- data is : ", resp.data);
         res.status(200).json(resp.data);
@@ -397,7 +402,7 @@ async function updatePlayerRanks(req) {
       setOutMatchRankSetRank(targetRank, targetRank + 1);
       setOutMatchSetRank(req.body.email, targetRank);
     }
-    updateList();
+    updateList(true);
   });
 }
 
