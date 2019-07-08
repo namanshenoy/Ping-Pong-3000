@@ -50,6 +50,9 @@ class RankList extends React.Component{
 	}
 
 	render(){
+		console.log("rankList email: " + this.state.currentPlayerEmail);
+		console.log("ranklist list: ");
+		console.log(this.state.players);
 		return(
 		<div class='wrap-table-scroll-y'>
 			<Table striped bordered hover>
