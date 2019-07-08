@@ -33,8 +33,6 @@ class LoginRegisterContainer extends React.Component{
 		)
 		.then((r) => {
 			/* Either the register was succesful, or it failed */
-			console.log("Trying register:")
-			console.log(r);
 			let success = r.data.success;
 			if(!success){
 				this.setState({registerError: r.data.error});

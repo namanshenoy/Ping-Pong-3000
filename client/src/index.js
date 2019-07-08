@@ -35,11 +35,18 @@ class Main extends React.Component{
 			endpoint: "http://localhost:4000",
 			socket: socketIOClient('http://localhost:4000'),
 			players: [],
-			isChallenged: false
+			isChallenged: false,
+			stateNum: 0
 		}
+
+		this.handleGoBack = 
+		this.handleGoBack.bind(this);
 
 		this.handleDelete = 
 		this.handleDelete.bind(this);
+
+		this.handleConfirmDelete = 
+		this.handleConfirmDelete.bind(this);
 
 		this.handleLoginRender = 
 		this.handleLoginRender.bind(this);
@@ -58,9 +65,12 @@ class Main extends React.Component{
    		let dummyPlayer;
     	
     	socket.on("updateList", (data)=>{
+    		console.log("socket sending updated list");
     		console.log(data.data);
     		data.data.map((player)=>{
     			if(player.email === this.state.currentPlayerEmail){
+    				this.setState({isChallenged: false});
+    				this.setState({isChallenged: true});
     				this.setState({isChallenged: player.inMatch});
     			}
 				dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: player.inMatch};
@@ -78,11 +88,9 @@ class Main extends React.Component{
 			currentPlayerEmail: localStorage.getItem('currentPlayerEmail'),
 			isChallenged: bool
 		})
-		console.log(this.state.currentPlayerEmail);
 	}
 
 	handleLogout(){
-		console.log("upper log out");
 		this.setState({
 			currentPlayerEmail: null,
 			isChallenged: false
@@ -92,6 +100,22 @@ class Main extends React.Component{
 	}
 
 	handleDelete(){
+		this.setState(() => ({
+			stateNum: this.state.stateNum + 1
+		}))
+	}
+
+	handleGoBack(){
+		this.setState(() => ({
+			stateNum: this.state.stateNum - 1
+		}))
+	}
+
+	handleConfirmDelete(){
+
+		this.setState({
+			stateNum: 0
+		});
 
 		axios.post('http://localhost:4000/deletePlayer', 
 						{
@@ -99,7 +123,6 @@ class Main extends React.Component{
 						}
 		)
 		.then((r) => {
-			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.SUCCESS;
 			
@@ -107,7 +130,6 @@ class Main extends React.Component{
 				this.setState({error: r.data.error});
 			} else {
 				//account deleted
-				console.log("DELETE CALLED");
 				this.handleLogout();	
 			}
 		})
@@ -116,7 +138,6 @@ class Main extends React.Component{
 	}
 
 	render(){
-		console.log("THE CURRENT isChallenged: " + this.state.isChallenged.toString());
 		let isChallenged = this.state.isChallenged;
 		if(isChallenged === null || isChallenged === undefined){
 			isChallenged = false;
@@ -125,13 +146,19 @@ class Main extends React.Component{
 
 		let deleteButton = null;
 		if(this.state.currentPlayerEmail != null && this.state.currentPlayerEmail != "null"){
-			deleteButton = <div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
+
+			if(this.state.stateNum === 0){
+				deleteButton = <div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
+			} else if(this.state.stateNum === 1){
+				deleteButton = <div>
+									<button onClick = {this.handleGoBack}>Go back</button>
+									<button onClick = {this.handleConfirmDelete}>Confirm</button>
+							   </div>
+			}
 		}
 
 		return(
 			<div class="MainContainer">
-				<div>{this.state.currentPlayerEmail}</div>
-				<div>{isChallenged.toString()}</div>
 				{deleteButton}
 				<SlidingCarousel messages={messages}/>
 				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
@@ -199,13 +226,11 @@ class LRC_Container extends React.Component{
 	render(){
 		
 		let currentEmail = this.state.currentPlayerEmail;
-		console.log("CURRENT EMAIL:" + currentEmail);
 
 		let functionalBar;
 		let isLoggedIn = false;
 		if(currentEmail != "null" && currentEmail != null){
-			console.log(this.state.currentPlayerEmail);
-			console.log("I SHOULD NOT BE CALLED");
+			
 			isLoggedIn = true;
 		}
 
@@ -221,7 +246,8 @@ class LRC_Container extends React.Component{
 			<LogoutChallengeWinContainer 
 			isChallenged={this.state.isChallenged} 
 			currentPlayerEmail={this.state.currentPlayerEmail}
-			logout={this.handleLogout} />
+			logout={this.handleLogout} />;
+			
 		}
 
 		return(
@@ -247,12 +273,26 @@ class LogoutChallengeWinContainer extends React.Component{
   		} else {
   			this.setState({stateNum: 0});
   		}
+
 	}
 
 	constructor(props){
 		super(props);
-		this.state = {
-			stateNum: 0
+
+		if(props.isChallenged){
+			this.state = {
+				stateNum: 1,
+				isChallenged: props.isChallenged,
+				currentPlayerEmail: props.currentPlayerEmail,
+
+			}
+		} else {
+			this.state = {
+				stateNum: 0,
+				isChallenged: props.isChallenged,
+				currentPlayerEmail: props.currentPlayerEmail,
+				
+			}
 		}
 
 		this.handleLogout = 
@@ -277,8 +317,6 @@ class LogoutChallengeWinContainer extends React.Component{
 
 	handleFinishMatch(){
 
-		console.log("trying to finish match");
-
 		/* Attempt to end the match */
 		axios.post('http://localhost:4000/concludeMatch', 
 						{
@@ -286,7 +324,6 @@ class LogoutChallengeWinContainer extends React.Component{
 						}
 		)
 		.then((r) => {
-			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			
@@ -317,19 +354,16 @@ class LogoutChallengeWinContainer extends React.Component{
 	handleChallenge(){
 
 		/* Attempt to initiate challene involving this player */
-		console.log("sending to: " + this.state.currentPlayerEmail);
 		axios.post('http://localhost:4000/challengePlayer', 
 						{
 							email: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
-			console.log(r);
 			/* Either the login was succesful, or it failed */
 			let success = r.data.success;
 			if(success === null || success === undefined){
 				/* Display Error Message to User */
-				console.log(r);
 				this.setState({
 					error: r.data.error
 				})
@@ -376,7 +410,7 @@ class LogoutChallengeWinContainer extends React.Component{
 				{button}
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
-			<MyChallenger currentPlayerEmail={this.state.currentPlayerEmail}/>
+			<MyChallenger isChallenged={this.state.isChallenged} currentPlayerEmail={this.state.currentPlayerEmail}/>
 			<div> {this.state.error} </div>
 		</div>
 		)
@@ -389,14 +423,15 @@ class MyChallenger extends React.Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			currentPlayerEmail: null,
-			otherPlayer: null
+			currentPlayerEmail: props.currentPlayerEmail,
+			isChallenged: props.isChallenged
 		}
 	}
 
 	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
 	  	this.setState({
-	  		currentPlayerEmail: currentPlayerEmail
+	  		currentPlayerEmail: currentPlayerEmail,
+	  		isChallenged: isChallenged
 	  	})
 	 }
 
@@ -409,12 +444,11 @@ class MyChallenger extends React.Component {
 						}
 		)
 		.then((r) => {
-			console.log(r);
 			/* Either they were in a challenge or they were not */
 			let inMatch = r.data.inMatch;
 			if(inMatch){
 				this.setState({
-					otherPlayer: r.data.email
+					otherPlayer: r.data.player
 				})
 			} else {
 				this.setState({
@@ -427,13 +461,22 @@ class MyChallenger extends React.Component {
 
 	render(){
 		let email = this.state.currentPlayerEmail;
+		let isChallenged = this.state.isChallenged;
 		let result;
+		let otherPlayer = this.state.otherPlayer;
 		if(email!==null){
-			 result = (
-			<div class="alertContainer">
-				<Alert variant="primary" className="myAlert"> You are currently scheduled to play: </Alert>
-			</div>
-			)
+			if(isChallenged) {
+				 result = (
+				 <div>
+				<div class="alertContainer">
+					<Alert variant="primary" className="myAlert"> You are currently scheduled to play: {otherPlayer}</Alert>
+				</div>
+					<ProgressBar animated now={100} />
+				</div>
+				)
+				} else {
+					result = <div></div>
+				}
 		}
 
 		return(
