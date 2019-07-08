@@ -284,14 +284,14 @@ class LogoutChallengeWinContainer extends React.Component{
 				stateNum: 1,
 				isChallenged: props.isChallenged,
 				currentPlayerEmail: props.currentPlayerEmail,
-
+				promise: true
 			}
 		} else {
 			this.state = {
 				stateNum: 0,
 				isChallenged: props.isChallenged,
 				currentPlayerEmail: props.currentPlayerEmail,
-				
+				promise: true
 			}
 		}
 
@@ -372,6 +372,16 @@ class LogoutChallengeWinContainer extends React.Component{
 				this.setState(() => ({
 					stateNum: this.state.stateNum + 1
 				}))
+
+				if(this.state.promise){
+					this.setState({
+						promise: false
+					})
+				} else {
+					this.setState({
+						promise: true
+					})
+				}
 			}
 		})
 		.catch(e => {
@@ -391,6 +401,8 @@ class LogoutChallengeWinContainer extends React.Component{
 	}
 
 	render(){
+		let promise = this.state.promise;
+		promise = !promise;
 		let button;
 
 		if(this.state.stateNum === 0){
@@ -410,7 +422,7 @@ class LogoutChallengeWinContainer extends React.Component{
 				{button}
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
-			<MyChallenger isChallenged={this.state.isChallenged} currentPlayerEmail={this.state.currentPlayerEmail}/>
+			<MyChallenger promise={promise} isChallenged={this.state.isChallenged} currentPlayerEmail={this.state.currentPlayerEmail}/>
 			<div> {this.state.error} </div>
 		</div>
 		)
@@ -424,27 +436,33 @@ class MyChallenger extends React.Component {
 		super(props);
 		this.state = {
 			currentPlayerEmail: props.currentPlayerEmail,
-			isChallenged: props.isChallenged
+			isChallenged: props.isChallenged,
+			promise: props.promise
 		}
 	}
 
-	componentWillReceiveProps({isChallenged, currentPlayerEmail}) {
+	componentWillReceiveProps({promise, isChallenged, currentPlayerEmail}) {
+		console.log(promise);
 	  	this.setState({
 	  		currentPlayerEmail: currentPlayerEmail,
-	  		isChallenged: isChallenged
+	  		isChallenged: isChallenged,
+	  		promise: promise
 	  	})
 	 }
 
 	componentDidMount(){
 
-		/* Attempt to end the match */
-		axios.post('http://localhost:4000/inMatch', 
+		console.log("inMatch called!");
+		/* Get Opponent Name */
+			axios.post('http://localhost:4000/inMatch', 
 						{
 							email: this.state.currentPlayerEmail
 						}
 		)
 		.then((r) => {
 			/* Either they were in a challenge or they were not */
+			console.log("The otherPlayer response:");
+			console.log(r);
 			let inMatch = r.data.inMatch;
 			if(inMatch){
 				this.setState({
@@ -457,9 +475,12 @@ class MyChallenger extends React.Component {
 			}
 		})
 		.catch(e => console.error(e))
+	
 	}
 
 	render(){
+
+
 		let email = this.state.currentPlayerEmail;
 		let isChallenged = this.state.isChallenged;
 		let result;
