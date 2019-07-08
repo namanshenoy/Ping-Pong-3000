@@ -48,7 +48,8 @@ async function fetchPlayers() {
         playersObj.data.push({
           name: e.name,
           rank: e.rank,
-          inMatch: e.inMatch
+          inMatch: e.inMatch,
+          email: e.email
         });
         client.hset(playerRedisKey, e.email, JSON.stringify(e));
       });
@@ -137,7 +138,7 @@ app.post("/deletePlayer", (req, res) => {
 });
 
 app.post("/challengePlayer", (req, res) => {
-  console.log("inMatch player ", req.body);
+  console.log("inMatch player ", req.body, req);
   challengePlayerCall(req, res);
 });
 
@@ -193,6 +194,7 @@ async function addPlayerCall(req, res) {
         console.log("player num is ", val);
         addPlayerToRedis(req.body, parseInt(val) + 1);
         if (err) {
+
           console.log("err", err);
         }
         numPlayersIncr();
@@ -211,11 +213,14 @@ async function delPlayerCall(req, res) {
 
     await axios
       .post("http://localhost:8080/deletePlayer", req.body)
-      .then(resp => {
+      .then(async resp => {
         console.log("deleted player");
         res.status(200).json(resp.data);
-        deletePlayerFromRedis(req.body);
-        numPlayersDecr();
+        console.log('sent response')
+        await deletePlayerFromRedis(req.body);
+        console.log('deleted player from redis')
+        await numPlayersDecr();
+        console.log('decremented numPlayers in redis')
       })
       .then(() => {
         console.log("starting to update list");

@@ -1,8 +1,6 @@
 const axios = require('axios')
 const url = "http://localhost:4000"
 
-
-
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 
 async function callEndpoint(endpoint, data) {
@@ -45,9 +43,11 @@ async function test() {
         await callEndpoint('/deletePlayer', { email: 'test1@oracle.com' })
         await callEndpoint('/deletePlayer', { email: 'test2@oracle.com' })
         await callEndpoint('/deletePlayer', { email: 'test3@oracle.com' })
-        // await callEndpoint('/deletePlayer', { email: 'test4@oracle.com' })
-        // await callEndpoint('/deletePlayer', { email: 'test5@oracle.com' })
-        // await callEndpoint('/deletePlayer', { email: 'test6@oracle.com' })
+        await callEndpoint('/deletePlayer', { email: 'cam@oracle.com' })
+        await callEndpoint('/deletePlayer', { email: 'sam@oracle.com' })
+        await callEndpoint('/deletePlayer', { email: 'sal@oracle.com' })
+        await callEndpoint('/deletePlayer', { email: 'test12@oracle.com' })
+        await callEndpoint('/deletePlayer', { email: 'test13@oracle.com' })
 
         await callEndpoint("/addPlayer", { player: "test1", email: "test1@oracle.com", password: "1234" })
         await callEndpoint("/addPlayer", { player: "test2", email: "test2@oracle.com", password: "1234" })
