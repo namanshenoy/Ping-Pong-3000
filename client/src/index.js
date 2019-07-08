@@ -453,7 +453,13 @@ class MyChallenger extends React.Component {
 	componentDidMount(){
 
 		console.log("inMatch called!");
-		/* Get Opponent Name */
+	
+	
+	}
+
+	render(){
+
+			/* Get Opponent Name */
 			axios.post('http://localhost:4000/inMatch', 
 						{
 							email: this.state.currentPlayerEmail
@@ -475,12 +481,6 @@ class MyChallenger extends React.Component {
 			}
 		})
 		.catch(e => console.error(e))
-	
-	}
-
-	render(){
-
-
 		let email = this.state.currentPlayerEmail;
 		let isChallenged = this.state.isChallenged;
 		let result;
