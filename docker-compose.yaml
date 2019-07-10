@@ -22,7 +22,6 @@ services:
 ## SETUP CLIENT CONTAINER
   client: 
     image: maxbartnitski/client:v8
-
     # build: ./client 
     # environment:
     #   - API_HOST=http://localhost:3000/
