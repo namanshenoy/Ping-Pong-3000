@@ -2,7 +2,6 @@ import React from 'react';
 import Carousel from 'react-bootstrap/Carousel';
 import logo from './Images/front.jpg';
 
-
 class SlidingCarousel extends React.Component {
 
 	render(){

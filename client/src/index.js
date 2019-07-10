@@ -3,13 +3,20 @@ import ReactDOM from 'react-dom';
 import Carousel from 'react-bootstrap/Carousel';
 import Alert from 'react-bootstrap/Alert';
 import ProgressBar from 'react-bootstrap/ProgressBar';
-import logo from './Images/front.jpg';
+import logo from './Images/d.png';
+import capture from './Images/Capture.png'
 import SlidingCarousel from './SlidingCarousel';
-import ListContainer from './RankList';
+import ListContainer from './ListContainer';
 import Button from 'react-bootstrap/Button';
 import LoginRegisterContainer from './LoginRegister'
 import axios from 'axios'
 import socketIOClient from "socket.io-client";
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
+import ListGroup from 'react-bootstrap/ListGroup';
+import Component1 from './Component1';
+import {Spring} from 'react-spring/renderprops';
+
+import {useSprings, animated} from 'react-spring';
 
 //
 import './index.css';
@@ -18,10 +25,9 @@ import * as serviceWorker from './serviceWorker';
 /* Simulates request for messages */
 
 const messages = [
-{title: "Want your message here?", message: 'Venmo @SalVerduzco'},
-{title: 'Oracle Ping Pong Rankings', message: 'Sell sell sell!'},
-{title: "End Date", message: 'Tournament ends 20th of July'}
+{title: 'Oracle Ping Pong Rankings', message: 'Good luck!'}
 ];
+
 
 
 /* Simulating API call here */
@@ -73,7 +79,8 @@ class Main extends React.Component{
     				this.setState({isChallenged: true});
     				this.setState({isChallenged: player.inMatch});
     			}
-				dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: player.inMatch};
+				dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: 
+				player.inMatch, wins:player.wins, losses:player.losses, ratio:player.ratio, winStreak:player.winStreak };
 				testPlayer.push(dummyPlayer);
     		})
     		this.setState({
@@ -138,6 +145,7 @@ class Main extends React.Component{
 	}
 
 	render(){
+
 		let isChallenged = this.state.isChallenged;
 		if(isChallenged === null || isChallenged === undefined){
 			isChallenged = false;
@@ -148,27 +156,121 @@ class Main extends React.Component{
 		if(this.state.currentPlayerEmail != null && this.state.currentPlayerEmail != "null"){
 
 			if(this.state.stateNum === 0){
-				deleteButton = <div><button className = "deleteButton" onClick={this.handleDelete}> Delete Account </button></div>
+				deleteButton = <div class="Delete"><Button className = "deleteButton" variant="secondary" onClick={this.handleDelete}> Delete Account </Button></div>
 			} else if(this.state.stateNum === 1){
-				deleteButton = <div>
-									<button onClick = {this.handleGoBack}>Go back</button>
-									<button onClick = {this.handleConfirmDelete}>Confirm</button>
+				deleteButton = <div class="Delete">
+									<Button variant="info" onClick = {this.handleGoBack}>Go back</Button>
+									<Button variant="secondary"onClick = {this.handleConfirmDelete}>Confirm</Button>
 							   </div>
 			}
 		}
 
 		return(
-			<div class="MainContainer">
+
+/*
+  			<div class="MainContainer">
+
 				{deleteButton}
-				<SlidingCarousel messages={messages}/>
-				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
+				<Spring config={{}}
+  				from={{ opacity: 0, marginTop: -500}}
+  				to={{ opacity: 1 , marginTop: 0}}>
+  				{props => <div style={props}><FrontBanner />
+				</div>}
+				</Spring>
+
+				<Spring
+  				from={{ opacity: 0, marginLeft: -500}}
+  				to={{ opacity: 1 , marginLeft: 0}}>
+  				{props => <div style={props}><ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
+				</div>}
+				</Spring>
+
 				<LRC_Container currentPlayerEmail={this.state.currentPlayerEmail} 
 				isChallenged = {this.state.isChallenged}
 				onLogout = {this.handleLogout} 
 				onLogin={this.handleLoginRender}/>
+	<marquee className="scrollingText" behavior="scroll" direction="left">Big Bang Meteorang</marquee>
 
 			</div>
+*/
+
+	<div class="MainContainer">
+				<FrontBanner />
+
+
+		
+				<ListContainer players={this.state.players} currentPlayerEmail={this.state.currentPlayerEmail}/>
+
+				<LRC_Container currentPlayerEmail={this.state.currentPlayerEmail} 
+				isChallenged = {this.state.isChallenged}
+				onLogout = {this.handleLogout} 
+				onLogin={this.handleLoginRender}/>
+				<EmojiLegend />
+				{deleteButton}
+
+
+	</div>
+
 		);
+	}
+}
+
+class EmojiLegend extends React.Component {
+	render(){
+		return(
+
+		<div className="LegendContainer">
+			<div className="Legend">
+				<ListGroup className="emojis">
+					<ListGroup.Item>❗</ListGroup.Item>
+		 			<ListGroup.Item>🌶️</ListGroup.Item>
+		  			<ListGroup.Item>🔥</ListGroup.Item>
+		  			<ListGroup.Item>🌋</ListGroup.Item>
+		  			<ListGroup.Item>⭐</ListGroup.Item>
+		  			<ListGroup.Item>🥇</ListGroup.Item>
+		  			<ListGroup.Item>🥈</ListGroup.Item>
+		  			<ListGroup.Item>🥉</ListGroup.Item>
+
+				</ListGroup>
+
+				
+				<ListGroup className="emojis">
+					<ListGroup.Item className="topEmoji"> This player is currently challenged.</ListGroup.Item>
+		 			<ListGroup.Item> 2-Game Winning Streak</ListGroup.Item>
+		  			<ListGroup.Item>3-Game Winning Streak</ListGroup.Item>
+		  			<ListGroup.Item>5+ Game Winning Streak</ListGroup.Item>
+		  			<ListGroup.Item>Current Highest Streak</ListGroup.Item>
+		  			<ListGroup.Item>First Place</ListGroup.Item>
+		  			<ListGroup.Item>Second Place</ListGroup.Item>
+		  			<ListGroup.Item>Third Place</ListGroup.Item>
+
+				</ListGroup>
+				
+			</div>
+		</div>
+
+
+		)
+	}
+}
+
+class FrontBanner extends React.Component{
+	render(){
+		return(
+
+
+
+
+			<div class="FrontBannerContainer">
+				<Spring
+	  				from={{ opacity: 0, marginLeft: -800}}
+	  				to={{ opacity: 1 , marginLeft: 0}}>
+	  				{props => <div style={props}> <a href="https://www.oracle.com/index.html"><img src={logo} class="myImage"/></a>
+     			</div>}
+				</Spring>
+				<div class="Caption"> Ping Pong Rankings </div>
+			</div>
+		)
 	}
 }
 
@@ -400,15 +502,40 @@ class LogoutChallengeWinContainer extends React.Component{
 		}))
 	}
 
+
+
 	render(){
+		const renderTooltip = props => (
+  <div
+    {...props}
+    style={{
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      padding: '2px 10px',
+      color: 'white',
+      borderRadius: 3,
+      ...props.style,
+    }}
+  >
+    Pressing this will attmept to challenge the player above you in rank placement.
+  </div>
+);
 		let promise = this.state.promise;
 		promise = !promise;
 		let button;
 
 		if(this.state.stateNum === 0){
-			button = <Button onClick = {this.handleChallenge} className="ChallengeButton" variant="warning">Challenge!</Button>
+			button = (
+			<OverlayTrigger
+    			placement="right-start"
+   				delay={{ show: 250, hide: 400 }}
+   			    overlay={renderTooltip}
+  				>			
+  			<Button onClick = {this.handleChallenge} className="ChallengeButton" variant="primary">Challenge!</Button>
+
+  			</OverlayTrigger>
+  			)
 		} else if(this.state.stateNum === 1){
-			button = <Button onClick = {this.handleConfirmChallenge}variant="outline-warning">Click Here Only If You Won The Match</Button>
+			button = <Button className='ChallengeButton' onClick = {this.handleConfirmChallenge}variant="outline-warning">Click Here Only If You Won The Match</Button>
 		} else if(this.state.stateNum === 2){
 			button = <div>
 					 <Button onClick={this.handleMisclick} variant="danger">Go Back</Button> 
@@ -427,7 +554,7 @@ class LogoutChallengeWinContainer extends React.Component{
 		</div>
 		)
 	}
-}
+} 
 
 class MyChallenger extends React.Component {
 
@@ -459,8 +586,8 @@ class MyChallenger extends React.Component {
 
 	render(){
 
-			/* Get Opponent Name */
-			axios.post('http://localhost:4000/inMatch', 
+		/* Get Opponent Name */
+		axios.post('http://localhost:4000/inMatch', 
 						{
 							email: this.state.currentPlayerEmail
 						}
@@ -471,16 +598,26 @@ class MyChallenger extends React.Component {
 			console.log(r);
 			let inMatch = r.data.inMatch;
 			if(inMatch){
-				this.setState({
-					otherPlayer: r.data.player
-				})
+
+				if(r.data.player !== this.state.otherPlayer){
+					console.log("1 being called");
+					this.setState({
+						otherPlayer: r.data.player
+					})
+				}
+
 			} else {
-				this.setState({
-					otherPlayer: null
-				})
+
+				if(this.state.otherPlayer !== null){
+					console.log("2 being called");
+					this.setState({
+						otherPlayer: null
+					})
+				}
 			}
 		})
 		.catch(e => console.error(e))
+
 		let email = this.state.currentPlayerEmail;
 		let isChallenged = this.state.isChallenged;
 		let result;
@@ -490,9 +627,9 @@ class MyChallenger extends React.Component {
 				 result = (
 				 <div>
 				<div class="alertContainer">
-					<Alert variant="primary" className="myAlert"> You are currently scheduled to play: {otherPlayer}</Alert>
+					<Alert variant="secondary" className="myAlert"> You are currently scheduled to play: {otherPlayer}</Alert>
 				</div>
-					<ProgressBar animated now={100} />
+					<ProgressBar variant='danger' animated now={100} />
 				</div>
 				)
 				} else {
