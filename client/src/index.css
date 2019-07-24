@@ -10,6 +10,14 @@ body {
   min-height: 1000px;
 }
 
+@media only screen and (max-width: 600px) {
+ 
+
+
+
+}
+
+
 
 .header{
 background: linear-gradient(to bottom, #FF0909 0%, #F40D5A 100%);
@@ -47,6 +55,10 @@ code {
   width: 100%;
 }
 
+.barrier{
+	
+}
+
 .Capture {
 	height: 200px;
 	width: auto;
@@ -61,26 +73,31 @@ code {
 
 
 .emojis{
-	height: 170px;
 	text-align: center;
-	margin-right: 10px;
 
+	outline-color: coral;
 }
 
 .LegendContainer{
+	margin-top: 100px;
 	width: auto;
 	display: flex;
-	justify-content: center;
+	justify-content: space-around;
 	margin-bottom: 50px;
 }
 
+.subLegends {
+	display: flex;
+	
+}
+	
 .Legend {
-	overflow-y:scroll;
-	display: inline-flex;
-	font-size: 21px;
-	margin-top: 40px;
-	justify-content: center;
-	align-items: center;
+	width: 100%;
+	display: flex;
+	font-size: 20px;
+	flex-direction: row;
+	justify-content: space-evenly;
+
 }
 
 .topEmoji{
@@ -158,6 +175,7 @@ table.table-bordered > tbody > tr > td{
 .myButtonRegister {
 	min-width: 90px;
 	margin-left: 10px;
+	margin-right: 10px;
 }
 
 
@@ -201,6 +219,10 @@ table.table-bordered > tbody > tr > td{
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 80px;
+}
+
+.redText{
+	color: red;
 }
 
 .myForms{

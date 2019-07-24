@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Ping Pong Frontend</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/leaderboard.css">
+</head>
+<body>
+  <div id="app">
+    <div class="top-banner">
+      <img class="banner-logo" src="img/sig-color-bw-bbg.gif">
+      <h1 class="banner-title">Ping Pong Leaderboard</h1>
+    </div>
+    <div id="leaderboard-container">
+      <div class="leaderboard-header">
+        <div class="leaderboard-header-item">Rank</div>
+        <div class="leaderboard-header-item">Name</div>
+        <div class="leaderboard-header-item">Wins</div>
+        <div class="leaderboard-header-item">Losses</div>
+        <div class="leaderboard-header-item">W/L Ratio</div>
+      </div>
+      <div id="leaderboard-items">
+      </div>
+    </div>
+    <div class="button-group">
+      <button class="button-gray" id="login-button">Login</button>
+      <button class="button-blue" id="register-button">Register</button>
+    </div>
+    <div class="errorContainer">
+      <div id="errorMessage"> </div>
+    </div>
+    <div id="login-group">
+      <div>
+        <label for="loginEmail" >Email</label>
+        <input type="email" id="loginEmail" placeholder="Enter oracle email">
+      </div>
+      <div>
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Password">
+      </div>
+    </div>
+    <div id="register-group">
+      <div>
+        <label for="registerEmail"> Email </label>
+        <input type="email" id="registerEmail" placeholder="Enter oracle email">
+      </div>
+      <div>
+        <label for="registerUsername"> Username </label>
+        <input type="username" id="registerUsername" placeholder="Enter public display name">
+      </div>
+      <div>
+        <label for="registerPassword"> Password </label>
+        <input type="password" id="registerPassword" placeholder="Enter your password">
+      </div>
+      <div>
+        <label for="registerConfirm"> Confirm Password </label>
+        <input type="confirm" id="confirmPassword" placeholder="Confirm password">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://npmcdn.com/@reactivex/rxjs@5.0.0-beta.6/dist/global/Rx.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+  <script src="js/naman.js"></script>
+  <script src="js/helpers.js"></script>
+  <script src="js/script.js"></script>
+  <script src=js/loginreg.js></script>  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js">
+  </script>
+  <script src="js/logicboard.js"></script>
+
+  <script>
+      var testPlayer = [];
+      var dummyPlayer;
+      var socket = io('http://localhost:4000');
+      // socket.on('connect', My_Function);
+      // socket.on('disconnect', My_Function);
+      socket.on("updateList", (data)=>{
+        testPlayer = [];
+        console.log("socket sending updated list");
+        console.log(data);
+        data.data.map((player)=>{
+          if(true/*same email*/){
+            //signed in player
+          }
+        dummyPlayer = {name: player.name, rank: player.rank, email: player.email, inMatch: 
+        player.inMatch, wins:player.wins, losses:player.losses, ratio:player.ratio, winStreak:player.winStreak };
+        testPlayer.push(dummyPlayer);
+        })
+        updateList(testPlayer);
+      });
+  </script>
+</body>
+</html>

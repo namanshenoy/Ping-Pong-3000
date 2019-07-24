@@ -1,6 +1,4 @@
 import React from 'react';
-import Carousel from 'react-bootstrap/Carousel';
-import logo from './Images/front.jpg';
 import {Spring} from 'react-spring/renderprops';
 
 class Component1 extends React.Component {

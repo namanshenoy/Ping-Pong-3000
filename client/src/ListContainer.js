@@ -51,7 +51,6 @@ class RankList extends React.Component{
 	render(){
 		return(
 
-	
 		<Spring
   				from={{ opacity: 0, marginTop: -1000}}
   				to={{ opacity: 1 , marginTop: 0}}>
@@ -72,7 +71,7 @@ class RankList extends React.Component{
 			  </tbody>
 			</Table>
 		</div>}
-			</Spring>	
+		</Spring>	
 			
 		
 		);

@@ -1,10 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Carousel from 'react-bootstrap/Carousel';
 import Alert from 'react-bootstrap/Alert';
 import ProgressBar from 'react-bootstrap/ProgressBar';
 import logo from './Images/d.png';
-import capture from './Images/Capture.png'
 import SlidingCarousel from './SlidingCarousel';
 import ListContainer from './ListContainer';
 import Button from 'react-bootstrap/Button';
@@ -72,7 +70,7 @@ class Main extends React.Component{
     	
     	socket.on("updateList", (data)=>{
     		console.log("socket sending updated list");
-    		console.log(data.data);
+    		console.log(data);
     		data.data.map((player)=>{
     			if(player.email === this.state.currentPlayerEmail){
     				this.setState({isChallenged: false});
@@ -221,30 +219,48 @@ class EmojiLegend extends React.Component {
 
 		<div className="LegendContainer">
 			<div className="Legend">
-				<ListGroup className="emojis">
-					<ListGroup.Item>❗</ListGroup.Item>
-		 			<ListGroup.Item>🌶️</ListGroup.Item>
-		  			<ListGroup.Item>🔥</ListGroup.Item>
-		  			<ListGroup.Item>🌋</ListGroup.Item>
-		  			<ListGroup.Item>⭐</ListGroup.Item>
-		  			<ListGroup.Item>🥇</ListGroup.Item>
-		  			<ListGroup.Item>🥈</ListGroup.Item>
-		  			<ListGroup.Item>🥉</ListGroup.Item>
 
-				</ListGroup>
+				<div className="subLegends">
+							<ListGroup className="emojis">
+								<ListGroup.Item>❗</ListGroup.Item>
+					 			<ListGroup.Item>🌶️</ListGroup.Item>
+					  			<ListGroup.Item>🔥</ListGroup.Item>
+					  			<ListGroup.Item>🌋</ListGroup.Item>
+					  		
 
-				
-				<ListGroup className="emojis">
-					<ListGroup.Item className="topEmoji"> This player is currently challenged.</ListGroup.Item>
-		 			<ListGroup.Item> 2-Game Winning Streak</ListGroup.Item>
-		  			<ListGroup.Item>3-Game Winning Streak</ListGroup.Item>
-		  			<ListGroup.Item>5+ Game Winning Streak</ListGroup.Item>
-		  			<ListGroup.Item>Current Highest Streak</ListGroup.Item>
-		  			<ListGroup.Item>First Place</ListGroup.Item>
-		  			<ListGroup.Item>Second Place</ListGroup.Item>
-		  			<ListGroup.Item>Third Place</ListGroup.Item>
+							</ListGroup>
 
-				</ListGroup>
+							
+							<ListGroup className="emojis barrier">
+								<ListGroup.Item className="topEmoji"> This player is currently challenged.</ListGroup.Item>
+					 			<ListGroup.Item> 2-Game Winning Streak</ListGroup.Item>
+					  			<ListGroup.Item>3-Game Winning Streak</ListGroup.Item>
+					  			<ListGroup.Item>5+ Game Winning Streak</ListGroup.Item>
+					  	
+							</ListGroup>
+				</div>
+
+				<div className="subLegends">
+					<ListGroup className="emojis">
+					
+			  			<ListGroup.Item>⭐</ListGroup.Item>
+			  			<ListGroup.Item>🥇</ListGroup.Item>
+			  			<ListGroup.Item>🥈</ListGroup.Item>
+			  			<ListGroup.Item>🥉</ListGroup.Item>
+					</ListGroup>
+
+					
+					<ListGroup className="emojis">
+						<ListGroup.Item className="topEmoji"> Player with highest streak.</ListGroup.Item>
+			 			<ListGroup.Item> First Place</ListGroup.Item>
+			  			<ListGroup.Item> Second Place </ListGroup.Item>
+			  			<ListGroup.Item> Third Place </ListGroup.Item>
+			  			
+					</ListGroup>
+				</div>
+
+
+
 				
 			</div>
 		</div>
@@ -550,7 +566,7 @@ class LogoutChallengeWinContainer extends React.Component{
 				<Button onClick = {this.props.logout} className="LogoutButton" variant="info">Logout</Button>
 			</div>
 			<MyChallenger promise={promise} isChallenged={this.state.isChallenged} currentPlayerEmail={this.state.currentPlayerEmail}/>
-			<div> {this.state.error} </div>
+			<div className="redText"> {this.state.error} </div>
 		</div>
 		)
 	}

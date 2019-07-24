@@ -1,5 +1,4 @@
 import React from 'react';
-import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import axios from 'axios'
@@ -41,8 +40,6 @@ class LoginRegisterContainer extends React.Component{
 			)
 				.then((r) => {
 					/* Either the register was succesful, or it failed */
-					console.log("Trying register:")
-					console.log(r);
 					let success = r.data.success;
 					if (!success) {
 						this.setState({ registerError: r.data.error });
@@ -123,11 +120,11 @@ class LoginRegisterContainer extends React.Component{
 	render(){
 
 		let form;
-		if(this.state.tryLogin == true){
+		if(this.state.tryLogin === true){
 			form = <Login tryLogin={this.tryLogin} error={this.state.loginError}/>
 		}
 
-		if(this.state.tryRegister == true){
+		if(this.state.tryRegister === true){
 			form = <Register tryRegister={this.tryRegister} error={this.state.registerError}/>
 		}
 
