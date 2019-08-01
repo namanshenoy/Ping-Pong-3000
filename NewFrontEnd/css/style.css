@@ -1,0 +1,292 @@
+body {
+  background: #233540;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Roboto",
+                "Oxygen",
+                "Ubuntu",
+                "Cantarell",
+                "Fira Sans",
+                "Droid Sans",
+                "Helvetica Neue",
+                sans-serif;
+}
+
+#app {
+  margin: 0;
+  padding: 0;
+  margin-bottom: 800px;
+}
+.top-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: column;
+  width: 100vw;
+  text-align: center;
+}
+
+.banner-logo {
+  width: 300px;
+  margin-bottom: 0px;
+  margin: 1vh auto;
+  display: block;
+}
+
+.banner-title {
+  text-align: center;
+  font: italic bold 12px/30px Georgia, serif;
+  font-family: Arial;
+  margin-bottom: 30px;
+  font-size: 20px;
+  color: white;
+}
+
+/* #region  Leaderboard */
+.leaderboard-header {
+  display: grid;
+  grid-template-columns: 20% 20% 20% 20% 20%;
+  grid-column-gap: 1px;
+
+}
+
+.leaderboard-header-item {
+  flex: 1;
+  background: linear-gradient(to bottom, #FF0909 0%, #F40D5A 100%);
+  text-align: center;
+  font-weight: bold;
+  font-size: 30px;
+  padding: 15px;
+  position: relative;
+  animation: firstRow 1.5s;
+}
+
+
+@keyframes firstRow {
+  0% {left: -100px;}
+  100%{left: 0px;}
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 20% 20% 20% 20% 20%;
+  grid-column-gap: 1px;
+}
+
+.leaderboard-row > div {
+  padding: 1rem;
+  font-size: 25px;
+  text-align: center;
+}
+
+.leaderboard-row:nth-of-type(odd) > div {
+  background: #A8A8A9;
+}
+.leaderboard-row:nth-of-type(even) > div {
+  background: #B1B1B1;
+}
+
+#leaderboard-container {
+  width: 90vw;
+  margin-left: 5vw;
+}
+
+.leaderboard-row-item {
+  text-overflow: ellipsis;
+}
+/* #endregion */
+
+
+
+
+
+/* #region buttons */
+button {
+  display: inline-block;
+  word-spacing: normal;
+  font-weight: 400;
+  text-transform: none;
+  text-indent: 0px;
+  text-shadow: none;
+  border: 1px solid transparent;
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: .25rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.errorContainer{
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+#errorMessage{
+  min-height: 30px;
+  margin: auto;
+  justify-content: center;
+  color: red;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.button-gray {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d
+}
+
+.button-blue {
+  color: #fff;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.button-group {
+  padding: 2vh 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.button-group > button {
+  margin-left: 10px;
+  margin-right: 10px;
+  min-width: 90px;
+}
+
+/* #endregion */
+
+/* #region login-group */
+#login-group{
+  /* margin-top: 50px; */
+  display: none;
+  grid-template-rows: 40px 40px;
+  grid-row-gap: 50px;
+  position: relative;
+  /* width: 50vw; */
+  justify-content: center;
+  animation:fade 1s;
+}
+
+#login-group * input {
+  padding: .375rem .75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  height: 1.8em;
+  width: 40vw;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  font-size: 1em;
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  margin-top: 10px;
+}
+
+#login-group * label {
+  display: block;
+  color: white;
+}
+/* #endregion */
+
+#register-group{
+  /* margin-top: 50px; */
+  display: none;
+  grid-template-rows: 40px 40px 40px;
+  grid-row-gap: 50px;
+  /* width: 50vw; */
+  justify-content: center;
+  position: relative;
+  animation: fade 1s;
+}
+
+#register-group * input {
+  padding: .375rem .75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  height: 1.8em;
+  width: 40vw;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  font-size: 1em;
+  transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  margin-top: 10px;
+}
+
+#register-group * label {
+  display: block;
+  color: white;
+}
+
+
+.example {
+  width: 100px;
+  height: 100px;
+  position: relative  ;
+  top: 0px;
+  background-color: red;
+
+  animation: examples 4s;
+}
+
+@keyframes examples {
+  0% {top: -500px;}
+  100% {top: 0px;}
+}
+
+@keyframes fade {
+  0% {top: -100px; opacity: 0.0;}
+  100% {top: 0px; opacity: 1.0;}
+}
+
+@keyframes fadeLeft {
+  0% {left: -100px; opacity: 0.0;}
+  100% {left: 0px; opacity: 1.0;}
+}
+
+.animateMe {
+  animation: fadeLeft 2s infinite;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

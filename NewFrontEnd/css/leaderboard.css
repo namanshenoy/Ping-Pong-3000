@@ -1,0 +1,9 @@
+.leaderboard-row-item{
+	position: relative;
+	animation: firstRow 1s;
+}
+
+@keyframes firstRow {
+	0% {left: -100px; opacity: 0.0;}
+	100%{left: 0px; opacity: 1;}
+}

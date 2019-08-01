@@ -1,6 +1,6 @@
 import React from 'react';
 import Table from 'react-bootstrap/Table';
-
+import Spring from 'react-spring/renderprops';
 
 /* Simulating API CALL here */
 class ListContainer extends React.Component{
@@ -19,16 +19,14 @@ class ListContainer extends React.Component{
 		}
 	}
 
-
-	componentDidMount(){
-
-	}
-
 	render(){
 		return(
-			<div class="ListContainer">
-				<RankList currentPlayerEmail={this.state.currentPlayerEmail} players={this.state.players} />
-			</div>
+
+			<Spring
+  				from={{ opacity: 0, marginLeft: -500}}
+  				to={{ opacity: 1 , marginLeft: 0}}>
+  				{props => <div style={props}>hello</div>}
+			</Spring>
 		);
 	}
 }
@@ -50,42 +48,96 @@ class RankList extends React.Component{
 	}
 
 	render(){
-		console.log("rankList email: " + this.state.currentPlayerEmail);
-		console.log("ranklist list: ");
-		console.log(this.state.players);
 		return(
-		<div class='wrap-table-scroll-y'>
-			<Table striped bordered hover>
-			  <thead>
-			    <tr>
-			      <th>Rank</th>
-			      <th>Name</th>
-			    </tr>
-			  </thead>
-			  <tbody>
-			  	{this.GenerateList(this.state.players, this.state.currentPlayerEmail)}
-			  </tbody>
-			</Table>
-		</div>
+
+		<Spring
+  				from={{ opacity: 0, marginTop: -1000}}
+  				to={{ opacity: 1 , marginTop: 0}}>
+  				{props => <div style={props}>hello</div>}
+		</Spring>
+		
 		);
 	}
 
 	GenerateList(array, currentPlayerEmail){
 		let email = currentPlayerEmail;
 		let res = [];
+		let i = -1;
 		array.map((player)=>
 			
 			{
+				i = i + 1;
+				let pushMe;
+				let emojis;
 				if(email!==player.email){
-				res.push(<tr>
-				<td> {player.rank} </td>
-				<td> {player.name} </td>
-				</tr>)
+
+					if(i==0){
+						emojis = '👑' ;
+					}
+
+					if(i==1){
+						emojis = '🥈';
+					}
+
+					if(i==2){
+						emojis = '🥉';
+					}
+
+					if(i>2){
+						emojis = '';
+					}
+
+					if(player.winStreak == 1){
+						emojis += '⬆️';
+					}
+
+					if(player.winStreak > 1){
+						emojis += '🔥';
+					}
+
+					
+					pushMe = <tr><td> {player.rank} </td>
+								 <td> {player.name} {emojis} </td>
+								 <td> {player.wins} </td>
+								 <td> {player.losses} </td>
+								 <td> {player.ratio} </td> </tr>
+
+					
+					res.push(pushMe)
 				} else {
-					res.push(<tr>
-				<td className="currentPlayer"> {player.rank} </td>
-				<td className="currentPlayer"> {player.name} </td>
-				</tr>)
+						if(i==0){
+						emojis = '👑' ;
+					}
+
+					if(i==1){
+						emojis = '🥈';
+					}
+
+					if(i==2){
+						emojis = '🥉';
+					}
+
+					if(i>2){
+						emojis = '';
+					}
+
+					if(player.winStreak == 1){
+						emojis += '⬆️';
+					}
+
+					if(player.winStreak > 1){
+						emojis += '🔥';
+					}
+
+					
+					pushMe = <tr className='currentPlayer'><td className='currentPlayer'> {player.rank} </td>
+								 <td> {player.name} {emojis} </td>
+								 <td> {player.wins} </td>
+								 <td> {player.losses} </td>
+								 <td> {player.ratio} </td> </tr>
+					
+
+					res.push(pushMe)
 				}
 			}
 		)
