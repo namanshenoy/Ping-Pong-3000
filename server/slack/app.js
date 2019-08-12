@@ -1,9 +1,10 @@
+require('dotenv').config();
 const request = require('request')
 const axios = require('axios')
 
-const clientID = '683414152146.721420977238'
-const clientSecret = '96e31a3fbb708d92180c9427f0d8afa7'
-const appToken = 'xoxb-683414152146-721539568566-TcBSm9u1VNcU3c6kXhR3xW6K'
+const clientID = process.env.CLIENTID;
+const clientSecret = process.env.CLIENTSECRET;
+const appToken = process.env.APPTOKEN;
 const username = 'challenger'
 
 const instance = axios.create({

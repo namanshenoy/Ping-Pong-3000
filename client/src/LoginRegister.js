@@ -85,6 +85,7 @@ class LoginRegisterContainer extends React.Component{
 			if(!success){
 				this.setState({loginError: r.data.error});
 			} else {
+				console.log(r.data.token)
 				this.props.onLogin(user_email, r.data.inMatch);
 			}
 		})

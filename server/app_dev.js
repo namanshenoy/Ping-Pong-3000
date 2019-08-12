@@ -15,8 +15,7 @@ const auth = require('./auth')
 const port = process.env.SERVER_PORT || 4000;
 
 // access redis mini-database
-const client = redis.createClient({ password: process.env.REDIS_PASS })
-
+const client = redis.createClient({password: process.env.REDIS_PASS})
 // const client = redis.createClient("redis://redis:6379");
 
 const app = express();
