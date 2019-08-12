@@ -41,9 +41,8 @@ setPlayerNum(true);
 async function fetchPlayers() {
   const playersObj = { data: [] };
   const res = await axios
-    .get("backend://backend:8080/getPlayers")
+    .get("http://backend:8080/getPlayers")
     .then(players => {
-      console.log("players : ", players.data.players);
       players.data.players.forEach(e => {
         playersObj.data.push({
           name: e.name,
@@ -66,20 +65,12 @@ async function fetchPlayers() {
 };
 
 async function updateList(useCache) {
-  console.log("updating list");
   const playersObj = { data: [] };
 
   const thisNumPlayers = await getNumPlayersAPI();
 
   const data = await client.hgetall(playerRedisKey, (err, players) => {
     if (players && Object.keys(players).length === thisNumPlayers && useCache) {
-      console.log(
-        "players length is ",
-        Object.keys(players).length,
-        "this num players is ",
-        thisNumPlayers
-      );
-      console.log("Using cache");
       for (let player in players) {
         let pPlayer = JSON.parse(players[player]);
         playersObj.data.push({
@@ -96,7 +87,6 @@ async function updateList(useCache) {
       playersObj.data.sort((x, y) => {
         return x.rank - y.rank;
       });
-      console.log("returning playersObj ", playersObj);
       io.emit("updateList", playersObj);
     } else {
       fetchPlayers().then(data => {
@@ -131,29 +121,25 @@ client.on("error", err => {
  */
 
 app.post("/addPlayer", (req, res) => {
-  console.log("adding player");
   addPlayerCall(req, res);
 });
 
 app.post("/login", (req, res) => {
-  console.log("logging in player", req.body);
   loginPlayerCall(req, res);
 });
 
 app.post("/deletePlayer", (req, res) => {
-  console.log("deleting player", req.body);
   delPlayerCall(req, res);
 });
 
 app.post("/challengePlayer", (req, res) => {
-  console.log("inMatch player ", req.body);
   challengePlayerCall(req, res);
 });
 
 app.get('/getPlayers', async (req, res) => {
   console.log('getting players')
   try {
-    await axios.get('backend://backend:8080/getPlayers').then(resp => {
+    await axios.get('http://backend:8080/getPlayers').then(resp => {
       res.status(200).json(resp.data)
     })
   } catch (e) {
@@ -204,12 +190,10 @@ async function getRedisPlayers(req, res) {
 }
 async function forwardInMatch(req, res) {
   try {
-    await axios.post('backend://backend:8080/inMatch', req.body).then(resp => {
-      // console.log('replying with data', resp.data)
+    await axios.post('http://backend:8080/inMatch', req.body).then(resp => {
       res.status(200).json(resp.data)
     })
   } catch (e) {
-    // console.log("ERROR: ", e.response.data);
     res.status(400).json(e.response.data);
   }
 
@@ -220,15 +204,10 @@ async function addPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post("backend://backend:8080/addPlayer", req.body).then(resp => {
-      // console.log("added player");
+    await axios.post("http://backend:8080/addPlayer", req.body).then(resp => {
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
-        // console.log("player num is ", val);
         addPlayerToRedis(req.body, parseInt(val) + 1);
-        if (err) {
-          // console.log("err", err);
-        }
         numPlayersIncr();
       });
     });
@@ -244,7 +223,7 @@ async function delPlayerCall(req, res) {
     await checkNumPlayers();
 
     await axios
-      .post("backend://backend:8080/deletePlayer", req.body)
+      .post("http://backend:8080/deletePlayer", req.body)
       .then(async resp => {
         // console.log("deleted player");
         res.status(200).json(resp.data);
@@ -302,7 +281,7 @@ async function setPlayerNum(reset) {
 }
 
 async function getNumPlayersAPI() {
-  return await axios.get("backend://backend:8080/getPlayers").then(players => {
+  return await axios.get("http://backend:8080/getPlayers").then(players => {
     const numPlayers = parseInt(players.data.players.length);
     return numPlayers;
   });
@@ -364,7 +343,7 @@ async function addPlayerToRedis(jsonBody, rank) {
 async function loginPlayerCall(req, res) {
   // console.log("logging in player with email", req.body.email);
   try {
-    await axios.post("backend://backend:8080/login", req.body).then(resp => {
+    await axios.post("http://backend:8080/login", req.body).then(resp => {
       // console.log("logged in player");
       res.status(200).json(resp.data);
     });
@@ -377,7 +356,7 @@ async function loginPlayerCall(req, res) {
 async function challengePlayerCall(req, res) {
   try {
     await axios
-      .post("backend://backend:8080/challengePlayer", req.body)
+      .post("http://backend:8080/challengePlayer", req.body)
       .then(resp => {
         // console.log("added player");
         res.status(200).json(resp.data);
@@ -401,7 +380,7 @@ async function concludeMatch(req, res) {
   try {
     // console.log('*************concluding match************')
     await axios
-      .post("backend://backend:8080/concludeMatch", req.body)
+      .post("http://backend:8080/concludeMatch", req.body)
       .then(resp => {
         // console.log("concluded match -- data is : ", resp.data);
         res.status(200).json(resp.data);

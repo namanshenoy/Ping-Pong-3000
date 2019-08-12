@@ -1,4 +1,6 @@
-/*jshint esversion: 6 */const express = require("express");
+/*jshint esversion: 6 */
+require('dotenv').config();
+const express = require("express");
 const http = require("http");
 const socketio = require("socket.io");
 const redis = require("redis");
@@ -8,11 +10,13 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 
-const port = process.env.PORT || 4001;
+const auth = require('./auth')
 
+const port = process.env.SERVER_PORT || 4000;
 
 // access redis mini-database
-const client = redis.createClient();
+const client = redis.createClient({ password: process.env.REDIS_PASS })
+
 // const client = redis.createClient("redis://redis:6379");
 
 const app = express();
@@ -41,7 +45,7 @@ setPlayerNum(true);
 async function fetchPlayers() {
   const playersObj = { data: [] };
   const res = await axios
-    .get("http://localhost:8080/getPlayers")
+    .get(`http://${process.env.HOSTNAME}:8080/getPlayers`)
     .then(players => {
       console.log("players : ", players.data.players);
       players.data.players.forEach(e => {
@@ -126,17 +130,26 @@ app.post("/login", (req, res) => {
   loginPlayerCall(req, res);
 });
 
-app.post("/deletePlayer", (req, res) => {
+app.post("/deletePlayer", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  } else if (await auth.deauth(req.body.token, req.body.email) === false) {
+    return;
+  }
+  
   delPlayerCall(req, res);
 });
 
-app.post("/challengePlayer", (req, res) => {
+app.post("/challengePlayer", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  }
   challengePlayerCall(req, res);
 });
 
 app.get('/getPlayers', async (req, res) => {
   try {
-    await axios.get('http://localhost:8080/getPlayers').then(resp => {
+    await axios.get(`http://${process.env.HOSTNAME}:8080/getPlayers`).then(resp => {
       res.status(200).json(resp.data)
     })
   } catch (e) {
@@ -157,16 +170,25 @@ app.get('/getRedisPlayers', async (req, res) => {
   }
 })
 
-app.post("/concludeMatch", (req, res) => {
+app.post("/concludeMatch", async (req, res) => {
+  if(await authHelper(req, res) === false) {
+    return;
+  }
   concludeMatch(req, res);
 });
 
-app.post("/isChallenged", (req, res) => {
+app.post("/isChallenged", async (req, res) => {
+  if(await authHelper(req, res) === false) {
+    return;
+  }
 
   res.json({ inMatch: true });
 });
 
-app.post("/inMatch", (req, res) => {
+app.post("/inMatch", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  }
   forwardInMatch(req, res)
 })
 
@@ -174,9 +196,6 @@ app.post('/getRedisPlayers', (req, res) => {
   getRedisPlayers(req, res)
 })
 
-// app.post('/deleteAllRedisPlayers', (req, res) => {
-//   deleteAllPlayersFromRedis()
-// })
 async function getRedisPlayers(req, res) {
   await client.hgetall(playerRedisKey, (err, resp) => {
     res.status(200).json(resp);
@@ -184,7 +203,7 @@ async function getRedisPlayers(req, res) {
 }
 async function forwardInMatch(req, res) {
   try {
-    await axios.post('http://localhost:8080/inMatch', req.body).then(resp => {
+    await axios.post(`http://${process.env.HOSTNAME}:8080/inMatch`, req.body).then(resp => {
       res.status(200).json(resp.data)
     })
   } catch (e) {
@@ -198,7 +217,7 @@ async function addPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post("http://localhost:8080/addPlayer", req.body).then(resp => {
+    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(resp => {
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
         addPlayerToRedis(req.body, parseInt(val) + 1);
@@ -220,11 +239,12 @@ async function delPlayerCall(req, res) {
     await checkNumPlayers();
 
     await axios
-      .post("http://localhost:8080/deletePlayer", req.body)
+      .post(`http://${process.env.HOSTNAME}:8080/deletePlayer`, req.body)
       .then(async resp => {
         res.status(200).json(resp.data);
         await deletePlayerFromRedis(req.body);
         await numPlayersDecr();
+        await auth.deauth(req.body.token, req.body.email);
       })
       .then(() => {
         // force reload of new player challenge status
@@ -267,7 +287,7 @@ async function setPlayerNum(reset) {
 }
 
 async function getNumPlayersAPI() {
-  return await axios.get("http://localhost:8080/getPlayers").then(players => {
+  return await axios.get(`http://${process.env.HOSTNAME}:8080/getPlayers`).then(players => {
     const numPlayers = parseInt(players.data.players.length);
     return numPlayers;
   });
@@ -321,9 +341,15 @@ async function addPlayerToRedis(jsonBody, rank) {
 
 async function loginPlayerCall(req, res) {
   try {
-    await axios.post("http://localhost:8080/login", req.body).then(resp => {
+    await axios.post(`http://${process.env.HOSTNAME}:8080/login`, req.body).then(async (resp) => {
+      console.log('removing old hashes', resp.data)
+      const val = await auth.deauthEmail(req.body.email)
+      console.log('response data', resp.data, 'adding user to redis')
+      const token = await auth.login(req.body.email)
+      resp.data.token = token
       res.status(200).json(resp.data);
     });
+
   } catch (e) {
     res.status(400).json(e.response.data);
   }
@@ -332,7 +358,7 @@ async function loginPlayerCall(req, res) {
 async function challengePlayerCall(req, res) {
   try {
     await axios
-      .post("http://localhost:8080/challengePlayer", req.body)
+      .post(`http://${process.env.HOSTNAME}:8080/challengePlayer`, req.body)
       .then(resp => {
         res.status(200).json(resp.data);
       });
@@ -353,7 +379,7 @@ async function concludeMatch(req, res) {
   try {
     console.log('*************concluding match************')
     await axios
-      .post("http://localhost:8080/concludeMatch", req.body)
+      .post(`http://${process.env.HOSTNAME}:8080/concludeMatch`, req.body)
       .then(resp => {
         console.log("concluded match -- data is : ", resp.data);
         console.log('success message ' + resp.data.success)
@@ -435,15 +461,15 @@ async function setLoserByRank(targetRank, swap) {
         console.log('SETTING LOSER EMAIL ', playerObj.email)
         let losses = parseInt(playerObj.losses) + 1;
         let wins = parseInt(playerObj.wins);
-        let ratioVal = losses === 0 ? wins : wins/losses;
+        let ratioVal = losses === 0 ? wins : wins / losses;
         if (swap) {
           const newRank = parseInt(playerObj.rank) + 1;
-          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses , ' DIV IS ', (losses===0?wins : wins/losses))
-          setPlayerState(playerObj, { losses: losses, winStreak: 0, inMatch: false, rank: newRank, ratio: ratioVal})
+          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses, ' DIV IS ', (losses === 0 ? wins : wins / losses))
+          setPlayerState(playerObj, { losses: losses, winStreak: 0, inMatch: false, rank: newRank, ratio: ratioVal })
         } else {
           const newRank = parseInt(playerObj.rank);
-          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses , ' DIV IS ', (losses===0?wins : wins/losses))
-          setPlayerState(playerObj, {  losses: losses, winStreak: 0, inMatch: false, rank: newRank, ratio: ratioVal })
+          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses, ' DIV IS ', (losses === 0 ? wins : wins / losses))
+          setPlayerState(playerObj, { losses: losses, winStreak: 0, inMatch: false, rank: newRank, ratio: ratioVal })
         }
       }
     }
@@ -457,15 +483,15 @@ async function setWinnerByEmail(email, swap) {
     let losses = parseInt(JSON.parse(player).losses);
     let wsVal = parseInt(JSON.parse(player).winStreak) + 1;
     console.log('WINSTREAK VALUE IS ', wsVal)
-    let ratioVal = losses === 0 ? wins : wins/losses;
+    let ratioVal = losses === 0 ? wins : wins / losses;
     if (swap) {
-          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses , ' DIV IS ', (losses===0?wins : wins/losses))
+      console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses, ' DIV IS ', (losses === 0 ? wins : wins / losses))
       const newRank = parseInt(JSON.parse(player).rank) - 1
-      setPlayerState(JSON.parse(player), { wins: wins, winStreak: wsVal , inMatch: false, rank: newRank , ratio: ratioVal})
+      setPlayerState(JSON.parse(player), { wins: wins, winStreak: wsVal, inMatch: false, rank: newRank, ratio: ratioVal })
     } else {
-          console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses , ' DIV IS ', (losses===0?wins : wins/losses))
+      console.log('RATIO VALUE IS ', ratioVal, ' WINS ', wins, ' LOSSES ', losses, ' DIV IS ', (losses === 0 ? wins : wins / losses))
       const newRank = parseInt(JSON.parse(player).rank)
-      setPlayerState(JSON.parse(player), { wins: wins, winStreak: wsVal , inMatch: false, rank: newRank , ratio: ratioVal})
+      setPlayerState(JSON.parse(player), { wins: wins, winStreak: wsVal, inMatch: false, rank: newRank, ratio: ratioVal })
     }
 
   })
@@ -526,6 +552,28 @@ async function setInMatch(email) {
   });
 }
 
+async function authHelper(req, res) {
+
+  if (req.body.token === undefined || req.body.email === undefined) {
+    console.log('NO TOKEN')
+    res.status(400).json({ 'error': 'Email or Token not provided. Please provide User ID and Token' })
+    return false;
+
+  } else if (req.body.token.length < 10 || req.body.token.length > 40) {
+    console.log('Invalid token length')
+    res.status(400).json({ 'error': 'Invalid token length' })
+    return false;
+
+  } else if (req.body.token === process.env.ADMIN_TOKEN) {
+    return true;
+  }
+  else if (await auth.auth(req.body.token, req.body.email) === false) {
+    console.log('Invalid token')
+    res.status(400).json({ 'error': 'Invalid token, please log in again' })
+    return false;
+  }
+  return true;
+}
 
 /*
  *                             END HELPER FUNCTIONS 
