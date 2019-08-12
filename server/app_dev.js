@@ -49,6 +49,7 @@ async function fetchPlayers() {
     .then(players => {
       console.log("players : ", players.data.players);
       players.data.players.forEach(e => {
+        let playerRatio = e.losses === 0 ? e.wins : e.wins / e.losses;
         playersObj.data.push({
           name: e.name,
           rank: e.rank,
@@ -57,17 +58,17 @@ async function fetchPlayers() {
           wins: e.wins,
           losses: e.losses,
           winStreak: e.winStreak,
-          ratio: e.ratio
+          ratio: playerRatio
         });
         setPlayerRedis(e);
       });
 
-      const len = players.players ? players.players.length : 0
-      client.set("numPlayers", len)
+      const len = players.players ? players.players.length : 0;
+      client.set("numPlayers", len);
       return playersObj;
     });
   return res;
-};
+}
 
 async function updateList(useCache) {
   const playersObj = { data: [] };
@@ -78,6 +79,8 @@ async function updateList(useCache) {
     if (players && Object.keys(players).length === thisNumPlayers && useCache) {
       for (let player in players) {
         let pPlayer = JSON.parse(players[player]);
+        let pRatio = pPlayer.losses === 0 ? pPlayer.wins : pPlayer.wins / pPlayer.losses;
+        console.log('player wins : ' + pPlayer.wins + ' player losses ' + pPlayer.losses + ' ratio will be ' + pRatio)
         playersObj.data.push({
           name: pPlayer.name,
           rank: pPlayer.rank,
@@ -86,12 +89,13 @@ async function updateList(useCache) {
           wins: pPlayer.wins,
           losses: pPlayer.losses,
           winStreak: pPlayer.winStreak,
-          ratio: pPlayer.ratio
+          ratio: pRatio
         });
       }
       playersObj.data.sort((x, y) => {
         return x.rank - y.rank;
       });
+
       io.emit("updateList", playersObj);
     } else {
       fetchPlayers().then(data => {
@@ -110,6 +114,28 @@ io.on("connection", socket => {
   updateList(true);
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
+
+async function updatePlayerListJson(players, playersObj) {
+  for (let player in players) {
+    let pPlayer = JSON.parse(players[player]);
+    let pRatio = pPlayer.losses === 0 ? pPlayer.wins : pPlayer.wins / pPlayer.losses;
+    console.log('player wins : ' + pPlayer.wins + ' player losses ' + pPlayer.losses + ' ratio will be ' + pRatio)
+    playersObj.data.push({
+      name: pPlayer.name,
+      rank: pPlayer.rank,
+      inMatch: pPlayer.inMatch,
+      email: pPlayer.email,
+      wins: pPlayer.wins,
+      losses: pPlayer.losses,
+      winStreak: pPlayer.winStreak,
+      ratio: pRatio
+    });
+  }
+  playersObj.data.sort((x, y) => {
+    return x.rank - y.rank;
+  });
+  // return playersObj
+}
 
 client.on("error", err => {
 });
@@ -160,13 +186,14 @@ app.get('/getPlayers', async (req, res) => {
 
 app.get('/getRedisPlayers', async (req, res) => {
   try {
+    console.log('Getting players from redis')
     await client.hgetall(playerRedisKey, (err, players) => {
       res.status(200).json(players)
     })
   }
   catch (e) {
-    console.log('ERR:', e)
-    res.status(400)
+    console.log('ERR:', e);
+    res.status(400);
   }
 })
 
@@ -199,7 +226,7 @@ app.post('/getRedisPlayers', (req, res) => {
 async function getRedisPlayers(req, res) {
   await client.hgetall(playerRedisKey, (err, resp) => {
     res.status(200).json(resp);
-  })
+  });
 }
 async function forwardInMatch(req, res) {
   try {
@@ -297,6 +324,7 @@ async function getNumPlayersAPI() {
 //   await client.del(playerRedisKey);
 // }
 
+
 async function deletePlayerFromRedis(jsonBody) {
   await client.hget(playerRedisKey, jsonBody.email, (err, resp) => {
     if (resp) {
@@ -335,7 +363,7 @@ async function addPlayerToRedis(jsonBody, rank) {
   jsonBody["losses"] = 0;
   jsonBody["winStreak"] = 0;
   jsonBody["ratio"] = 0;
-  setPlayerRedis(jsonBody)
+  setPlayerRedis(jsonBody);
   updateList(true);
 }
 
@@ -374,10 +402,10 @@ async function challengePlayerCall(req, res) {
   }
 }
 
-// TODO swap player ranks
+
 async function concludeMatch(req, res) {
   try {
-    console.log('*************concluding match************')
+    console.log('*************concluding match************');
     await axios
       .post(`http://${process.env.HOSTNAME}:8080/concludeMatch`, req.body)
       .then(resp => {
@@ -503,6 +531,7 @@ async function setWinnerByEmail(email, swap) {
 async function setInMatchRank(rank) {
   await setPlayerByRank(rank, { "inMatch": true });
 }
+
 // TODO
 // async function setOutMatchRankSetRank(rank, target) {
 //   await setPlayerByRank(rank, { "rank": target, "inMatch": false });
