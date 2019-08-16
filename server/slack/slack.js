@@ -5,7 +5,10 @@ const axios = require('axios')
 const clientID = process.env.CLIENTID;
 const clientSecret = process.env.CLIENTSECRET;
 const appToken = process.env.APPTOKEN;
-const username = 'challenger'
+const botToken = process.env.BOTTOKEN;
+const legacyToken = process.env.LEGACYTOKEN;
+const username = 'challenger';
+const generalChannelID = 'CLEAKA85A';
 
 const instance = axios.create({
     baseURL: 'https://slack.com/api/',
@@ -39,4 +42,29 @@ async function sendMessage(userID) {
 }
 
 
-const userid = emailLookup('cameron.r.durham@gmail.com')
+// const userid = emailLookup('cameron.r.durham@gmail.com')
+async function channel_info(){
+    const params = `token=${appToken}`
+    try {
+        await instance.get(`channels.list?${params}`)
+        .then( jo => console.log(jo.data))
+    } catch(e) {
+        console.log(`ERROR: ${e}`)
+    }
+}
+
+async function inviteUser(email, first_name) {
+    const params = `token=${legacyToken}&email=${email}&first_name=${first_name}&channels=${generalChannelID}`
+    try {
+        await instance.post(`users.admin.invite?${params}`)
+        .then( jo => console.log(jo.data))
+    } catch (e) {
+        console.log(`ERROR: ${e}`)
+    }
+}
+
+// inviteUser('max.bartnitski@oracle.com', 'Max')
+// inviteUser('salvador.verduzco@oracle.com', 'Salvador')
+// inviteUser('mattcoop27@gmail.com', 'Cameron')
+// inviteUser('cameron.durham@oracle.com', 'Cameron')
+// inviteUser('oraclepingpong@gmail.com', 'Ping')

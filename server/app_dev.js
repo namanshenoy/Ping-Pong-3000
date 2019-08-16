@@ -10,13 +10,13 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 
-const auth = require('./auth')
+const auth = require('./auth');
 
 const port = process.env.SERVER_PORT || 4000;
 
 // access redis mini-database
 const client = redis.createClient({password: process.env.REDIS_PASS})
-// const client = redis.createClient("redis://redis:6379");
+// const client = redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
 
 const app = express();
 
@@ -370,7 +370,7 @@ async function loginPlayerCall(req, res) {
   try {
     await axios.post(`http://${process.env.HOSTNAME}:8080/login`, req.body).then(async (resp) => {
       console.log('removing old hashes', resp.data)
-      const val = await auth.deauthEmail(req.body.email)
+      await auth.deauthEmail(req.body.email)
       console.log('response data', resp.data, 'adding user to redis')
       const token = await auth.login(req.body.email)
       resp.data.token = token

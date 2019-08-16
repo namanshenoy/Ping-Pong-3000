@@ -1,4 +1,4 @@
-/*jshint esversion: 8 */
+/*jshint esversion: 6 */
 require('dotenv').config();
 const express = require("express");
 const http = require("http");
@@ -9,19 +9,16 @@ const cors = require('cors');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 axios.defaults.headers.post['Content-Type'] = 'application/json';
+
 const auth = require('./auth');
 
 const port = process.env.PORT || 4000;
 
-
 // access redis mini-database
-const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({ password: process.env.REDIS_PASS }) : redis.createClient("redis://redis:6379", { password: process.env.REDIS_PASS });
-
-if (process.env.HOSTNAME === 'localhost') {
-  console.log('created connection to redis instance locally')
-} else {
-  console.log('created connection to redis instance on server')
-}
+// const client = redis.createClient({password: process.env.REDIS_PASS})
+// const client = redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
+// const client = redis.createClient(`redis://redis:6379?password=${process.env.REDIS_PASS}`);
+const client = redis.createClient('redis://redis:6379');
 
 const app = express();
 
@@ -138,6 +135,7 @@ async function updatePlayerListJson(players, playersObj) {
   playersObj.data.sort((x, y) => {
     return x.rank - y.rank;
   });
+  // return playersObj
 }
 
 client.on("error", err => {
@@ -165,7 +163,7 @@ app.post("/deletePlayer", async (req, res) => {
   } else if (await auth.deauth(req.body.token, req.body.email) === false) {
     return;
   }
-
+  
   delPlayerCall(req, res);
 });
 
@@ -201,18 +199,18 @@ app.get('/getRedisPlayers', async (req, res) => {
 })
 
 app.post("/concludeMatch", async (req, res) => {
-  if (await authHelper(req, res) === false) {
+  if(await authHelper(req, res) === false) {
     return;
   }
   concludeMatch(req, res);
 });
 
 app.post("/isChallenged", async (req, res) => {
-  if (await authHelper(req, res) === false) {
+  if(await authHelper(req, res) === false) {
     return;
   }
 
-  res.json({ inMatch: true, logout: false });
+  res.json({ inMatch: true });
 });
 
 app.post("/inMatch", async (req, res) => {
@@ -234,11 +232,9 @@ async function getRedisPlayers(req, res) {
 async function forwardInMatch(req, res) {
   try {
     await axios.post(`http://${process.env.HOSTNAME}:8080/inMatch`, req.body).then(resp => {
-      resp.data.logout = false;
       res.status(200).json(resp.data)
     })
   } catch (e) {
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 
@@ -246,24 +242,10 @@ async function forwardInMatch(req, res) {
 
 async function addPlayerCall(req, res) {
   try {
-    // check reqest data for information
-    if (req.body.email === undefined || req.body.password === undefined || req.body.player === undefined) {
-      res.status(400).json({ 'error': 'Please include email, password, and player name' })
-    } else if (req.body.password.length >= 0) {
-
-      let strongEnough = /^(?=.*\d)(?=.*[a-z]).{6,}$/.test(req.body.password)
-      if (strongEnough === false) {
-        res.status(400).json({ 'error': 'Please include password of at least 6 characters and at least one letter and number' })
-      }
-    }
-
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(async resp => {
-      // authenticate new user to log in immediately
-      const token = await auth.login(req.body.email);
-      resp.data.token = token;
+    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(resp => {
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
         addPlayerToRedis(req.body, parseInt(val) + 1);
@@ -275,7 +257,6 @@ async function addPlayerCall(req, res) {
     });
   } catch (e) {
     console.log("ERROR: ", e.response.data);
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 }
@@ -288,7 +269,6 @@ async function delPlayerCall(req, res) {
     await axios
       .post(`http://${process.env.HOSTNAME}:8080/deletePlayer`, req.body)
       .then(async resp => {
-        resp.data.logout = true;
         res.status(200).json(resp.data);
         await deletePlayerFromRedis(req.body);
         await numPlayersDecr();
@@ -299,7 +279,6 @@ async function delPlayerCall(req, res) {
         updateList(false);
       });
   } catch (e) {
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 }
@@ -317,6 +296,10 @@ async function numPlayersIncr() {
 async function checkNumPlayers() {
   await setPlayerNum(false);
 }
+
+// async function resetPlayerNum() {
+//   await setPlayerNum(true);
+// }
 
 // input: boolean to hard-reset playerNum
 async function setPlayerNum(reset) {
@@ -337,6 +320,11 @@ async function getNumPlayersAPI() {
     return numPlayers;
   });
 }
+
+// async function deleteAllPlayersFromRedis() {
+//   await client.del(playerRedisKey);
+// }
+
 
 async function deletePlayerFromRedis(jsonBody) {
   await client.hget(playerRedisKey, jsonBody.email, (err, resp) => {
@@ -384,7 +372,7 @@ async function loginPlayerCall(req, res) {
   try {
     await axios.post(`http://${process.env.HOSTNAME}:8080/login`, req.body).then(async (resp) => {
       console.log('removing old hashes', resp.data)
-      await auth.deauthEmail(req.body.email)
+      const val = await auth.deauthEmail(req.body.email)
       console.log('response data', resp.data, 'adding user to redis')
       const token = await auth.login(req.body.email)
       resp.data.token = token
@@ -392,7 +380,6 @@ async function loginPlayerCall(req, res) {
     });
 
   } catch (e) {
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 }
@@ -402,7 +389,6 @@ async function challengePlayerCall(req, res) {
     await axios
       .post(`http://${process.env.HOSTNAME}:8080/challengePlayer`, req.body)
       .then(resp => {
-        resp.data.logout = false;
         res.status(200).json(resp.data);
       });
 
@@ -413,7 +399,6 @@ async function challengePlayerCall(req, res) {
     await setInMatch(req.body.email);
     updateList(true);
   } catch (e) {
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 }
@@ -433,13 +418,11 @@ async function concludeMatch(req, res) {
         } else {
           unsetPlayerChallenge(req)
         }
-        resp.data.logout = false;
         res.status(200).json(resp.data)
       });
   } catch (e) {
     console.log('ERROR WITHOUT DATA: ', e)
     console.log('ERROR: ', e.response.data)
-    e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
 }
@@ -482,11 +465,18 @@ async function swapPlayerRanks(req) {
 
       // won
       await setWinnerByEmail(req.body.email, true)
+      // await setOutMatchSetRank(req.body.email, targetRank);
+      // await incrementWinsByRank(targetRank)
 
       // lost
+      // setOutMatchRankSetRank(targetRank, targetRank + 1);
+      // await setPlayerByRank(targetRank, {"inMatch":false, "rank": targetRank + 1})
       await setLoserByRank(targetRank, true)
+      // await incrementLossesByRank(targetRank + 1)
+
 
     }
+
     updateList(true);
   });
 }
@@ -543,6 +533,11 @@ async function setInMatchRank(rank) {
   await setPlayerByRank(rank, { "inMatch": true });
 }
 
+// TODO
+// async function setOutMatchRankSetRank(rank, target) {
+//   await setPlayerByRank(rank, { "rank": target, "inMatch": false });
+// }
+
 async function setPlayerByRank(rank, state) {
   console.log("setting player with rank ", rank, ' to state ', state);
   await client.hgetall(playerRedisKey, async (err, players) => {
@@ -582,7 +577,7 @@ async function setPlayerState(jsonBody, state) {
 async function setInMatch(email) {
   await client.hget(playerRedisKey, email, (err, resp) => {
     const json = JSON.parse(resp);
-
+    // setMatchSetRank(json, true, null);
     setPlayerState(json, { "inMatch": true })
   });
 }
@@ -594,23 +589,17 @@ async function authHelper(req, res) {
     res.status(400).json({ 'error': 'Email or Token not provided. Please provide User ID and Token' })
     return false;
 
-  } else if (req.body.token.length < 10 || req.body.token.length > 100) {
+  } else if (req.body.token.length < 10 || req.body.token.length > 40) {
     console.log('Invalid token length')
     res.status(400).json({ 'error': 'Invalid token length' })
-    return false
-  } 
-  else if (req.body.token === process.env.ADMIN_TOKEN) {
+    return false;
+
+  } else if (req.body.token === process.env.ADMIN_TOKEN) {
     return true;
   }
   else if (await auth.auth(req.body.token, req.body.email) === false) {
     console.log('Invalid token')
-
-    const data = {
-      'error': 'Invalid token, please log in again',
-      'logout': true
-    }
-
-    res.status(200).json(data)
+    res.status(400).json({ 'error': 'Invalid token, please log in again' })
     return false;
   }
   return true;

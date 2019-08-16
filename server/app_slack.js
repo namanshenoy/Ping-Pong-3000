@@ -10,6 +10,7 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 const auth = require('./auth');
+const slack = require('./slack');
 
 const port = process.env.PORT || 4000;
 
@@ -260,10 +261,7 @@ async function addPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(async resp => {
-      // authenticate new user to log in immediately
-      const token = await auth.login(req.body.email);
-      resp.data.token = token;
+    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(resp => {
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
         addPlayerToRedis(req.body, parseInt(val) + 1);
@@ -273,6 +271,7 @@ async function addPlayerCall(req, res) {
         numPlayersIncr();
       });
     });
+    await slack.inviteUser(req.body.email, req.body.player);
   } catch (e) {
     console.log("ERROR: ", e.response.data);
     e.response.data.logout = false;
@@ -406,12 +405,18 @@ async function challengePlayerCall(req, res) {
         res.status(200).json(resp.data);
       });
 
-    await client.hget(playerRedisKey, req.body.email, (err, res) => {
+
+    await client.hget(playerRedisKey, req.body.email, async (err, res) => {
       const targetRank = parseInt(JSON.parse(res).rank) - 1;
-      setInMatchRank(targetRank);
+      await setInMatchRank(targetRank, req.body.email);
+      
     });
+    console.log(`challenged email ${challengedEmail}`);
+
     await setInMatch(req.body.email);
     updateList(true);
+    console.log('emailing challenged player');
+    slack.notify(req.body.email, challengedEmail);
   } catch (e) {
     e.response.data.logout = false;
     res.status(400).json(e.response.data);
@@ -539,11 +544,11 @@ async function setWinnerByEmail(email, swap) {
 
 
 // TODO
-async function setInMatchRank(rank) {
-  await setPlayerByRank(rank, { "inMatch": true });
+async function setInMatchRank(rank, email) {
+  return await setPlayerByRank(rank, { "inMatch": true }, email);
 }
 
-async function setPlayerByRank(rank, state) {
+async function setPlayerByRank(rank, state, email) {
   console.log("setting player with rank ", rank, ' to state ', state);
   await client.hgetall(playerRedisKey, async (err, players) => {
     for (let player in players) {
@@ -551,7 +556,9 @@ async function setPlayerByRank(rank, state) {
       let rRank = parseInt(pPlayer["rank"]);
       if (rRank === rank) {
         console.log('CHANGING DATA --- EMAIL:  ', pPlayer.email, pPlayer['email'], ' to ', state)
-        setPlayerState(pPlayer, state)
+        setPlayerState(pPlayer, state);
+        console.log(`p1 ${email}, p2 ${pPlayer.email}`)
+        slack.notify(email, pPlayer.email);
       }
     }
   });
@@ -594,12 +601,12 @@ async function authHelper(req, res) {
     res.status(400).json({ 'error': 'Email or Token not provided. Please provide User ID and Token' })
     return false;
 
-  } else if (req.body.token.length < 10 || req.body.token.length > 100) {
+  } else if (req.body.token.length < 10 || req.body.token.length > 40) {
     console.log('Invalid token length')
     res.status(400).json({ 'error': 'Invalid token length' })
     return false
-  } 
-  else if (req.body.token === process.env.ADMIN_TOKEN) {
+
+  } else if (req.body.token === process.env.ADMIN_TOKEN) {
     return true;
   }
   else if (await auth.auth(req.body.token, req.body.email) === false) {

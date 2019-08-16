@@ -1,7 +1,8 @@
 require('dotenv').config();
 
 const redis = require('redis');
-const client = redis.createClient({ password: process.env.REDIS_PASS });
+const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({password: process.env.REDIS_PASS}) :  redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
+
 const bluebird = require('bluebird')
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
@@ -28,7 +29,8 @@ function decrypt(text) {
 async function login(email) {
     try {
         const ts = Date.now().toString();
-        const hashed = await encrypt(ts);
+
+        const hashed = email.length > 4 ? await encrypt(email.substr(2, 2) + ts + email.substr(0, 2)) : await encrypt(ts);
         const hashString = `$hash_${hashed}$`;
         await client.set(hashString, email, 'EX', 3600, (err, res) => {
             console.log({ err, res });
