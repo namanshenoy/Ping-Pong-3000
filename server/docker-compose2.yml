@@ -1,8 +1,9 @@
 version: '3'
 services:
+    
   #  SETUP NODE CONTAINER
   server:
-    image: maxbartnitski/server:v17
+    image: maxbartnitski/server:v18
     expose:
       - "4000"
     ports:
@@ -13,10 +14,30 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_PASS=bear6metal6server
+      - REDIS_PASS=bear6metal6server    
     command: >
       sh -c "sleep 30s && npm run dev"
 
+
+## SETUP CLIENT CONTAINER
+  client: 
+    image: maxbartnitski/ojet:v4
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - server
+    links:
+      - server
+    environment:
+      - PORT=5000
+#  client:
+#    image: namanshenoy/pingpong-frontend:v1
+#    expose:
+#      - "5000"
+#    ports:
+#      - "5000:5000"
   redis:
     image: redis
     ports:
@@ -31,4 +52,4 @@ services:
     ports:
       - "8080:8080"
     expose:
-      - "8080" 
+      - "8080"
