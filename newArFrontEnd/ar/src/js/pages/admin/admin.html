@@ -4,6 +4,7 @@
   </div>
   <div class="right-panel pong-bar">
     <div class="container form-container" data-bind="display: showAdminToken()">
+      <h1 class="white">Admin Configuration</h1>
       <label for="admin-token">Token</label>
       <br>
       <!-- <div style="width: 30px;"></div> -->
@@ -21,6 +22,7 @@
       <button data-bind="disable: adminToken() === ''" on-click="[[ hideToken ]]">Hide</button>
     </div>
     <div class="container form-container">
+      <h1 class="white">Update</h1>
       <label for="new-score">Score</label>
       <br>
       <input type="text" class="input" id="new-score" data-bind="value: newScore, valueUpdate: 'afterkeydown'"></input>
@@ -29,6 +31,7 @@
       <button data-bind="disable: selectedIndex() === -1" on-click="[[ deleteAccount ]]">Delete</button>
     </div>
     <div class="container form-container">
+        <h1 class="white">Register</h1>
       <label for="register-name">Name</label>
       <br>
       <input class="input" id="register-name" data-bind="value: registerDisplayName, valueUpdate: 'afterkeydown'"></input>
