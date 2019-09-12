@@ -1,0 +1,52 @@
+<div class="two-panels">
+  <div class="left-panel pong-bar">
+    <player-table players="[[ () => players ]]" selected-index="[[ () => selectedIndex ]]" current-player-email="[[() => currentPlayerEmail ]]"></player-table>
+  </div>
+  <div class="right-panel pong-bar">
+    <div class="container form-container" data-bind="display: showAdminToken()">
+      <label for="admin-token">Token</label>
+      <br>
+      <!-- <div style="width: 30px;"></div> -->
+      <input class="input" id="admin-token" type="password" data-bind="value: adminToken, valueUpdate: 'afterkeydown'"></input>
+      <br><br>
+      <label for="admin-email">Admin email to send emails from</label>
+      <br>
+      <input class="input" id="admin-email" type="password" data-bind="value: adminEmail, valueUpdate: 'afterkeydown'"></input>
+      <br><br>
+      <label for="admin-password">Admin password to send emails from</label>
+      <br>
+      <input class="input" id="admin-password" type="password" data-bind="value: adminPassword, valueUpdate: 'afterkeydown'"></input>
+      <br>
+      <br>
+      <button data-bind="disable: adminToken() === ''" on-click="[[ hideToken ]]">Hide</button>
+    </div>
+    <div class="container form-container">
+      <label for="new-score">Score</label>
+      <br>
+      <input type="text" class="input" id="new-score" data-bind="value: newScore, valueUpdate: 'afterkeydown'"></input>
+      <br><br>
+      <button data-bind="disable: newScore() === ''" on-click="[[ update ]]">Update</button>
+      <button data-bind="disable: selectedIndex() === -1" on-click="[[ deleteAccount ]]">Delete</button>
+    </div>
+    <div class="container form-container">
+      <label for="register-name">Name</label>
+      <br>
+      <input class="input" id="register-name" data-bind="value: registerDisplayName, valueUpdate: 'afterkeydown'"></input>
+      <br>
+      <br>
+      <label for="register-email">Email</label>
+      <br>
+      <input type="text" class="input" id="register-email" data-bind="value: registerEmail, valueUpdate: 'afterkeydown'"></input>
+      <br>
+      <br>
+      <label for="register-score">Score</label>
+      <br>
+      <input type="text" class="input" id="register-score" data-bind="value: registerScore, valueUpdate: 'afterkeydown'"></input>
+      <br>
+      <br>
+      <span class="error-msg" data-bind="text: registerError"></span>
+      <button data-bind="disable: registerEmail() === '' || registerDisplayName() === '' " on-click="[[ register ]]">Create</button>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,20 @@
+
+<oj-bind-if test="[[ contentReady() ]]">
+  <div class="player-list">
+    <oj-bind-for-each data="[[ playersDataProvider ]]">
+      <template>
+        <div class="player-row" on-click="[[ selectPlayer.bind(null,$current) ]]" :class="[[ { 'selected-row' : selectedIndex() === $current.index, 'current-player-row' : currentPlayerEmail() === $current.data.email} ]]">
+          <div class="player-rank" on-click="[[ adminEnter.bind(null,$current.data.rank) ]]">
+            <oj-bind-text value="[[ $current.data.rank ]]"></oj-bind-text>
+          </div>
+          <div class="player-name">
+            <oj-bind-text value="[[ $current.data.name ]]"></oj-bind-text>
+          </div>
+          <div>
+            <oj-bind-text value="[[ $current.data.score ]]"></oj-bind-text>
+          </div>
+        </div>
+      </template>
+    </oj-bind-for-each>
+  </div> 
+</oj-bind-if>
