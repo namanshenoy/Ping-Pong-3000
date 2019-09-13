@@ -11,8 +11,10 @@ function(oj, ko, $, socketIOClient) {
     var self = this;
     // ojet serve --theme pingpongTheme
 
-    let endpoint = "http://ocs-ar-experience.com/";
-    let socket = socketIOClient('http://ocs-ar-experience.com/');
+    // finish admin email and password
+
+    let endpoint = "https://ocs-ar-experience.com/socket/";
+    let socket = socketIOClient('https://ocs-ar-experience.com/');
     
     socket.on("connect_failed", data => {
       self.players([]);
@@ -21,7 +23,9 @@ function(oj, ko, $, socketIOClient) {
       self.players([]);
     });
     socket.on("updateList", (data) => {
-      self.players(data.data.sort( (p1, p2) => p1.rank - p2.rank ));
+      self.players(data.data.sort( (p1, p2) => p2.score - p1.score ));
+      self.players.valueHasMutated();
+
     });
     self.currentPlayerEmail = ko.observable("");
 
@@ -60,9 +64,10 @@ function(oj, ko, $, socketIOClient) {
     self.showAdminToken = ko.observable(true);
 
     self.deleteAccount = function(){
+
       $.ajax({
         type: "POST",
-        url: endpoint+'backend/deletePlayer',
+        url: endpoint+'deletePlayer',
         data: {
           email: self.players()[self.selectedIndex()].email,
           token: self.adminToken()
@@ -88,30 +93,45 @@ function(oj, ko, $, socketIOClient) {
       }
       return result;
     }
-    self.adminEmail = ko.observable();
-    self.adminPassword = ko.observable();
+    self.adminEmail = ko.observable('');
+    self.adminPassword = ko.observable('');
 
     self.register = function(){
       let data = {
         firstName: self.registerDisplayName(),
         lastName: '',
+        name: self.registerDisplayName(),
         email: self.registerEmail(),
-        score: self.registerScore(),
-        adminToken: self.adminToken()
+        score: Number(self.registerScore()),
+        token: self.adminToken(),
+        phone: 'na',
+        org: 'na',
+        
       };
       if(self.adminEmail() !== '' && self.adminPassword() !== ''){
         data.adminEmail = self.adminEmail();
         data.adminPassword = self.adminPassword();
+      }else{
+        data.adminEmail = "invalid";
+        data.adminPassword = "invalid";
       }
+      // console.log(data);
       $.ajax({
         type: "POST",
-        url: endpoint+'backend/addScore',
-        data: data,
-        contentType:"application/json; charset=utf-8",
+        url: endpoint+'addPlayer',
+        data: JSON.stringify(data),
+        dataType:"json",
+        contentType: 'application/json; charset=utf-8',
         success: (response) => {
+          console.log(response);
+          if(typeof response.token === "undefined"){
+            self.registerError(response);
+          }else{
             self.registerDisplayName("");
             self.registerEmail("");
             self.registerError("");
+            self.newScore("");
+          }
         },
         error: (response) => {
           self.registerError(response.responseJSON.error);
@@ -120,10 +140,11 @@ function(oj, ko, $, socketIOClient) {
     }
     self.newScore = ko.observable('');
     self.update = function(){
-      let data = {
+      var data = {
         email: self.players()[self.selectedIndex()].email,
-        score: self.newScore(),
-        token: self.adminToken()
+        firstName: self.players()[self.selectedIndex()].name,
+        score: Number(self.newScore()),
+        token: self.adminToken(),
       };
       if(self.adminEmail() !== '' && self.adminPassword() !== ''){
         data.adminEmail = self.adminEmail();
@@ -134,8 +155,10 @@ function(oj, ko, $, socketIOClient) {
       }
       $.ajax({
         type: "POST",
-        url: endpoint+'backend/updateScore',
-        data: data,
+        url: endpoint+'updatePlayer',
+        data: JSON.stringify(data),
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
         success: (response) => {
 
         },

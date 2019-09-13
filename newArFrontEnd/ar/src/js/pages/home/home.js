@@ -10,7 +10,7 @@ function(oj, ko, $, socketIOClient) {
   function HomeViewModel() {
     var self = this;
 
-    let socket = socketIOClient('http://ocs-ar-experience.com/');
+    let socket = socketIOClient('https://ocs-ar-experience.com/');
 
     ko.bindingHandlers.display = {
       init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
@@ -49,7 +49,7 @@ function(oj, ko, $, socketIOClient) {
       self.players([]);
     });
     socket.on("updateList", (data) => {
-      self.players(data.data.sort( (p1, p2) => p1.rank - p2.rank ));
+      self.players(data.data.sort( (p1, p2) => p2.score - p1.score ));
 
     });
 

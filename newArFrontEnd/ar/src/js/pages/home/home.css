@@ -110,3 +110,16 @@
 .opponent{
   cursor: pointer;
 }
+.logo{
+  width: 660px;
+}
+@media( max-width: 700px ){
+  .logo{
+    width: 90%;
+  }
+}
+.info-container {
+  margin: 10px;
+  padding: 20px;
+  box-sizing: border-box;
+}

@@ -18,7 +18,10 @@ function(oj, ko, $, ArrayDataProvider) {
       self.contentReady(true);
     });
     self.selectPlayer = function(current){
+      
       self.selectedIndex(current.index);
+      
+      
     }
 
 
@@ -32,6 +35,7 @@ function(oj, ko, $, ArrayDataProvider) {
       if(self.current === self.adminKey){
         self.router.go('admin');
       }
+      console.log(self.current);
     }
   }
   return PlayerTable;

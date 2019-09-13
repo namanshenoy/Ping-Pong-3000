@@ -3,9 +3,9 @@
   <div class="player-list">
     <oj-bind-for-each data="[[ playersDataProvider ]]">
       <template>
-        <div class="player-row" on-click="[[ selectPlayer.bind(null,$current) ]]" :class="[[ { 'selected-row' : selectedIndex() === $current.index, 'current-player-row' : currentPlayerEmail() === $current.data.email} ]]">
-          <div class="player-rank" on-click="[[ adminEnter.bind(null,$current.data.rank) ]]">
-            <oj-bind-text value="[[ $current.data.rank ]]"></oj-bind-text>
+        <div class="player-row" on-click="[[ selectPlayer.bind(null,$current) ]]" :class="[[ { 'selected-row' : selectedIndex() === $current.index } ]]">
+          <div class="player-rank" on-click="[[ adminEnter.bind(null, ($current.index + 1) ) ]]">
+            <oj-bind-text value="[[ $current.index+1 ]]"></oj-bind-text>
           </div>
           <div class="player-name">
             <oj-bind-text value="[[ $current.data.name ]]"></oj-bind-text>
@@ -18,3 +18,4 @@
     </oj-bind-for-each>
   </div> 
 </oj-bind-if>
+
