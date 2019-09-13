@@ -1,0 +1,47 @@
+version: '3'
+services:
+    
+  #  SETUP NODE CONTAINER
+  server:
+    image: namanshenoy/openworld-server:v7
+    expose:
+      - "4000"
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+      - backend
+    env_file:
+      - .env
+    environment:
+      - REDIS_PASS=bear6metal6server    
+    command: >
+      sh -c "sleep 30s && npm run dev"
+
+  client:
+    image: namanshenoy/openworld-frontend:v7
+    environment:
+      - PORT=5000
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - server
+    links:
+      - server
+
+  redis:
+    image: redis
+    expose:
+      - "6379"
+    command: >
+      redis-server --requirepass bear6metal6server
+
+  backend:
+    image: namanshenoy/openworld-backend:v3
+    ports:
+      - "5050:8080"
+    expose:
+      - "8080"
+
