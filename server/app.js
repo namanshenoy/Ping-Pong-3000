@@ -13,11 +13,11 @@ const auth = require('./auth');
 
 const port = process.env.PORT || 4000;
 
-
+// console.log(process.env.HOSTNAME === 'nashenoy-linux')
 // access redis mini-database
 const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({ password: process.env.REDIS_PASS }) : redis.createClient("redis://redis:6379", { password: process.env.REDIS_PASS });
 
-if (process.env.HOSTNAME === 'localhost') {
+if (process.env.HOSTNAME === 'localhost' && client) {
   console.log('created connection to redis instance locally')
 } else {
   console.log('created connection to redis instance on server')
@@ -48,29 +48,28 @@ setPlayerNum(true);
 
 async function fetchPlayers() {
   const playersObj = { data: [] };
+  // console.log('GETTING PLAYER')
   const res = await axios
     .get(`http://${process.env.HOSTNAME}:8080/getPlayers`)
     .then(players => {
-      console.log("players : ", players.data.players);
+      // console.log("players : ", players.data.players);
       players.data.players.forEach(e => {
-        let playerRatio = e.losses === 0 ? e.wins : e.wins / e.losses;
+        // let playerRatio = e.losses === 0 ? e.wins : e.wins / e.losses;
         playersObj.data.push({
-          name: e.name,
+          name: e.firstName,
           rank: e.rank,
-          inMatch: e.inMatch,
-          email: e.email,
-          wins: e.wins,
-          losses: e.losses,
-          winStreak: e.winStreak,
-          ratio: playerRatio
+          score: e.score,
+          email: auth.encrypt(e.email),
         });
+        console.log('Saving to redis:', e)
         setPlayerRedis(e);
       });
 
       const len = players.players ? players.players.length : 0;
       client.set("numPlayers", len);
       return playersObj;
-    });
+    })
+    .catch(e => console.log('GETTING PLAYERS ERROR\n',e))
   return res;
 }
 
@@ -83,17 +82,14 @@ async function updateList(useCache) {
     if (players && Object.keys(players).length === thisNumPlayers && useCache) {
       for (let player in players) {
         let pPlayer = JSON.parse(players[player]);
-        let pRatio = pPlayer.losses === 0 ? pPlayer.wins : pPlayer.wins / pPlayer.losses;
-        console.log('player wins : ' + pPlayer.wins + ' player losses ' + pPlayer.losses + ' ratio will be ' + pRatio)
+        // let pRatio = pPlayer.losses === 0 ? pPlayer.wins : pPlayer.wins / pPlayer.losses;
+        // console.log('player wins : ' + pPlayer.wins + ' player losses ' + pPlayer.losses + ' ratio will be ' + pRatio)
+        console.log(pPlayer)
         playersObj.data.push({
-          name: pPlayer.name,
+          name: pPlayer.firstName,
           rank: pPlayer.rank,
-          inMatch: pPlayer.inMatch,
-          email: pPlayer.email,
-          wins: pPlayer.wins,
-          losses: pPlayer.losses,
-          winStreak: pPlayer.winStreak,
-          ratio: pRatio
+          email: auth.encrypt(pPlayer.email),
+          score: pPlayer.score
         });
       }
       playersObj.data.sort((x, y) => {
@@ -102,45 +98,32 @@ async function updateList(useCache) {
 
       io.emit("updateList", playersObj);
     } else {
-      fetchPlayers().then(data => {
-        playersObj.data.sort((x, y) => {
-          return x.rank - y.rank;
-        });
-        io.emit("updateList", data);
-      });
+      console.log('Fetching players')
+      fetchPlayers()
+        .then(data => {
+          // console.log(data)
+          playersObj.data.sort((x, y) => {
+            return x.rank - y.rank;
+          });
+          io.emit("updateList", data);
+        })
+        .catch(error => {
+          console.log('FETCHPLAYERS ERROR', error)
+        })
+      ;
     }
   });
   return data;
 }
 
 io.on("connection", socket => {
-  console.log("New client connected");
+  // console.log("New client connected");
   updateList(true);
   socket.on("disconnect", () => console.log("Client disconnected"));
 });
 
-async function updatePlayerListJson(players, playersObj) {
-  for (let player in players) {
-    let pPlayer = JSON.parse(players[player]);
-    let pRatio = pPlayer.losses === 0 ? pPlayer.wins : pPlayer.wins / pPlayer.losses;
-    console.log('player wins : ' + pPlayer.wins + ' player losses ' + pPlayer.losses + ' ratio will be ' + pRatio)
-    playersObj.data.push({
-      name: pPlayer.name,
-      rank: pPlayer.rank,
-      inMatch: pPlayer.inMatch,
-      email: pPlayer.email,
-      wins: pPlayer.wins,
-      losses: pPlayer.losses,
-      winStreak: pPlayer.winStreak,
-      ratio: pRatio
-    });
-  }
-  playersObj.data.sort((x, y) => {
-    return x.rank - y.rank;
-  });
-}
 
-client.on("error", err => {
+client.on("error", () => {
 });
 
 /*
@@ -151,8 +134,22 @@ client.on("error", err => {
  *                                      BEGIN ENDPOINTS
  */
 
-app.post("/addPlayer", (req, res) => {
+app.post("/addPlayer", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  } else if (await auth.deauth(req.body.token, req.body.email) === false) {
+    return;
+  }
   addPlayerCall(req, res);
+});
+
+app.post("/updatePlayer", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  } else if (await auth.deauth(req.body.token, req.body.email) === false) {
+    return;
+  }
+  updatePlayerCall(req, res);
 });
 
 app.post("/login", (req, res) => {
@@ -165,7 +162,7 @@ app.post("/deletePlayer", async (req, res) => {
   } else if (await auth.deauth(req.body.token, req.body.email) === false) {
     return;
   }
-
+  console.log('DELETEING PLAYER', req.body)
   delPlayerCall(req, res);
 });
 
@@ -179,17 +176,20 @@ app.post("/challengePlayer", async (req, res) => {
 app.get('/getPlayers', async (req, res) => {
   try {
     await axios.get(`http://${process.env.HOSTNAME}:8080/getPlayers`).then(resp => {
-      res.status(200).json(resp.data)
+      // console.log(resp.data.)
+      const out = resp.data.players.map(player => ( { ...player, email: auth.encrypt(player.email) } ));
+      // console.log(out)
+      res.status(200).json({ players: out })
     })
   } catch (e) {
-    console.log('ERR:', e)
+    console.log('ERRGETPLAYERS:', e)
     res.status(400)
   }
 })
 
 app.get('/getRedisPlayers', async (req, res) => {
   try {
-    console.log('Getting players from redis')
+    // console.log('Getting players from redis')
     await client.hgetall(playerRedisKey, (err, players) => {
       res.status(200).json(players)
     })
@@ -223,10 +223,10 @@ app.post("/inMatch", async (req, res) => {
 })
 
 app.post('/getRedisPlayers', (req, res) => {
-  getRedisPlayers(req, res)
+  getRedisPlayers(res)
 })
 
-async function getRedisPlayers(req, res) {
+async function getRedisPlayers(res) {
   await client.hgetall(playerRedisKey, (err, resp) => {
     res.status(200).json(resp);
   });
@@ -246,35 +246,59 @@ async function forwardInMatch(req, res) {
 
 async function addPlayerCall(req, res) {
   try {
-    // check reqest data for information
-    if (req.body.email === undefined || req.body.password === undefined || req.body.player === undefined) {
-      res.status(400).json({ 'error': 'Please include email, password, and player name' })
-    } else if (req.body.password.length >= 0) {
-
-      let strongEnough = /^(?=.*\d)(?=.*[a-z]).{6,}$/.test(req.body.password)
-      if (strongEnough === false) {
-        res.status(400).json({ 'error': 'Please include password of at least 6 characters and at least one letter and number' })
-      }
-    }
-
     // ensure numPlayers is set
     await checkNumPlayers();
 
-    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body).then(async resp => {
+    await axios.post(`http://${process.env.HOSTNAME}:8080/addPlayer`, req.body)
+      .then(async resp => {
+        // authenticate new user to log in immediately
+        const token = await auth.login(req.body.email);
+        resp.data.token = token;
+        res.status(200).json(resp.data);
+        client.get("numPlayers", (err, val) => {
+          addPlayerToRedis(req.body, parseInt(val) + 1)
+            .then(() => console.log('Added ' + req.body.email))
+          if (err) {
+            console.log("err", err);
+          }
+          numPlayersIncr();
+        });
+      })
+      .catch(e => {
+        console.log('ADDPLAYERERROR:', e.response.data)
+        res.json(e.response.data.error).status(400);
+      })
+  } catch (e) {
+    console.log("ERROR123: ", e.response.data);
+    e.response.data.logout = false;
+    res.json(e.response.data).status(400);
+  }
+}
+async function updatePlayerCall(req, res) {
+  try {
+
+    // ensure numPlayers is set
+    await checkNumPlayers();
+    const reqDecrypted = req.body;
+    reqDecrypted.email = auth.decrypt(req.body.email);
+
+    // console.log(reqDecrypted);
+
+    await axios.post(`http://${process.env.HOSTNAME}:8080/updatePlayer`, reqDecrypted).then(async resp => {
       // authenticate new user to log in immediately
-      const token = await auth.login(req.body.email);
+      const token = await auth.login(reqDecrypted.email);
       resp.data.token = token;
       res.status(200).json(resp.data);
       client.get("numPlayers", (err, val) => {
-        addPlayerToRedis(req.body, parseInt(val) + 1);
+        addPlayerToRedis(reqDecrypted, parseInt(val) + 1);
         if (err) {
-          console.log("err", err);
+          console.log("err33", err);
         }
         numPlayersIncr();
       });
     });
   } catch (e) {
-    console.log("ERROR: ", e.response.data);
+    console.log("ERROR123: ", e.response.data);
     e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
@@ -285,14 +309,18 @@ async function delPlayerCall(req, res) {
     // ensure numPlayers is set
     await checkNumPlayers();
 
+    const reqDecrypted = req.body;
+    reqDecrypted.email = auth.decrypt(req.body.email);
+
+    // console.log(reqDecrypted);
     await axios
-      .post(`http://${process.env.HOSTNAME}:8080/deletePlayer`, req.body)
+      .post(`http://${process.env.HOSTNAME}:8080/deletePlayer`, reqDecrypted)
       .then(async resp => {
         resp.data.logout = true;
         res.status(200).json(resp.data);
-        await deletePlayerFromRedis(req.body);
+        await deletePlayerFromRedis(reqDecrypted);
         await numPlayersDecr();
-        await auth.deauth(req.body.token, req.body.email);
+        await auth.deauth(reqDecrypted.token, reqDecrypted.email);
       })
       .then(() => {
         // force reload of new player challenge status
@@ -305,12 +333,12 @@ async function delPlayerCall(req, res) {
 }
 
 async function numPlayersDecr() {
-  await client.decr("numPlayers", (err, resp) => {
+  await client.decr("numPlayers", () => {
   });
 }
 
 async function numPlayersIncr() {
-  await client.incr("numPlayers", (err, resp) => {
+  await client.incr("numPlayers", () => {
   });
 }
 
@@ -327,7 +355,7 @@ async function setPlayerNum(reset) {
     }
   });
   const numPlayers = await getNumPlayersAPI();
-  await client.set("numPlayers", numPlayers, (err, resp) => {
+  await client.set("numPlayers", numPlayers, () => {
   });
 }
 
@@ -346,7 +374,7 @@ async function deletePlayerFromRedis(jsonBody) {
       updateRanks(targetRank);
     }
   });
-  await client.hdel(playerRedisKey, jsonBody.email, (err, resp) => {
+  await client.hdel(playerRedisKey, jsonBody.email, () => {
   });
 }
 
@@ -369,13 +397,13 @@ async function updateRanks(target) {
 
 // set player from json
 async function addPlayerToRedis(jsonBody, rank) {
+  console.log('Adding/Updating Player:', jsonBody)
   jsonBody["rank"] = rank;
-  jsonBody["name"] = jsonBody["player"];
-  jsonBody["inMatch"] = false;
-  jsonBody["wins"] = 0;
-  jsonBody["losses"] = 0;
-  jsonBody["winStreak"] = 0;
-  jsonBody["ratio"] = 0;
+  // jsonBody["inMatch"] = false;
+  // jsonBody["wins"] = 0;
+  // jsonBody["losses"] = 0;
+  // jsonBody["winStreak"] = 0;
+  // jsonBody["ratio"] = 0;
   setPlayerRedis(jsonBody);
   updateList(true);
 }

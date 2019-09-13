@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const redis = require('redis');
-const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({password: process.env.REDIS_PASS}) :  redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
+const client = process.env.HOSTNAME === 'nashenoy-linux' ? redis.createClient({password: process.env.REDIS_PASS}) :  redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
 
 const bluebird = require('bluebird')
 
@@ -10,17 +10,18 @@ bluebird.promisifyAll(redis.Multi.prototype);
 
 const crypto = require('crypto'),
     algorithm = 'aes-256-ctr',
-    password = process.env.PASSWORD;
+    password = crypto.createHash('sha256').update(String(process.env.PASSWORD)).digest('base64').substr(0, 32);
+    iv  = Buffer.from('26ae5cc854e36b6bdfca366848dea6bb', 'hex');
 
 function encrypt(text) {
-    const cipher = crypto.createCipher(algorithm, password);
+    const cipher = crypto.createCipheriv(algorithm, password, iv);
     let crypted = cipher.update(text, 'utf8', 'hex');
     crypted += cipher.final('hex');
     return crypted;
 }
 
 function decrypt(text) {
-    const decipher = crypto.createDecipher(algorithm, password);
+    const decipher = crypto.createCipheriv(algorithm, password, iv);
     let dec = decipher.update(text, 'hex', 'utf8');
     dec += decipher.final('utf8');
     return dec;
@@ -52,7 +53,7 @@ async function auth(token, user_id) {
             console.error('Invalid username');
             return false;
         } else {
-            console.error('No such token');
+            // console.error('No such token');
             return false;
         }
     })
@@ -69,7 +70,7 @@ async function deauth(token, user_id) {
             console.error('Invalid username');
             return false;
         } else {
-            console.error('No such token');
+            // console.error('No such token');
             return false;
         }
     })

@@ -1,6 +1,6 @@
 # Stage 1
 # base image
-FROM node:10.16.0 as build
+FROM node:10.16.0-slim as build
 
 # set working directory
 WORKDIR /app/server
