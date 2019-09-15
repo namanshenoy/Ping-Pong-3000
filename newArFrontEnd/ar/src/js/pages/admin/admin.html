@@ -29,6 +29,8 @@
       <br><br>
       <button data-bind="disable: newScore() === ''" on-click="[[ update ]]">Update</button>
       <button data-bind="disable: selectedIndex() === -1" on-click="[[ deleteAccount ]]">Delete</button>
+      <br>
+      <span class="error-msg" data-bind="text: registerError"></span>
     </div>
     <div class="container form-container">
         <h1 class="white">Register</h1>

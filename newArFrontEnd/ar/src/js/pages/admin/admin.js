@@ -78,6 +78,8 @@ function(oj, ko, $, socketIOClient) {
         }
       });
     }
+    
+    self.updateErrorError = ko.observable("");
 
     self.registerDisplayName = ko.observable("");
     self.registerEmail = ko.observable("");
@@ -132,6 +134,7 @@ function(oj, ko, $, socketIOClient) {
             self.registerDisplayName("");
             self.registerEmail("");
             self.registerError("");
+            self.updateError("");
             self.registerPhone("");
             self.registerOrg("");
             self.newScore("");
@@ -164,10 +167,10 @@ function(oj, ko, $, socketIOClient) {
         dataType: 'json',
         contentType: 'application/json; charset=utf-8',
         success: (response) => {
-
+          self.updateError(response.responseJSON.error);
         },
         error: (response) => {
-          self.registerError(response.responseJSON.error);
+          self.updateError(response.responseJSON.error);
         }
       });
     }
