@@ -83,6 +83,8 @@ function(oj, ko, $, socketIOClient) {
     self.registerEmail = ko.observable("");
     self.registerError = ko.observable("");
     self.registerScore = ko.observable("");
+    self.registerPhone = ko.observable("");
+    self.registerOrg = ko.observable("");
 
     self.makepass = function(length) {
       var result = '';
@@ -104,8 +106,8 @@ function(oj, ko, $, socketIOClient) {
         email: self.registerEmail(),
         score: Number(self.registerScore()),
         token: self.adminToken(),
-        phone: 'na',
-        org: 'na',
+        phone: self.registerPhone(),
+        org: self.registerOrg(),
         
       };
       if(self.adminEmail() !== '' && self.adminPassword() !== ''){
@@ -130,6 +132,8 @@ function(oj, ko, $, socketIOClient) {
             self.registerDisplayName("");
             self.registerEmail("");
             self.registerError("");
+            self.registerPhone("");
+            self.registerOrg("");
             self.newScore("");
           }
         },

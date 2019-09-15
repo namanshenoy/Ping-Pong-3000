@@ -46,6 +46,14 @@
       <br>
       <input type="text" class="input" id="register-score" data-bind="value: registerScore, valueUpdate: 'afterkeydown'"></input>
       <br>
+      <label for="register-phone">Phone Number</label>
+      <br>
+      <input type="text" class="input" id="register-phone" data-bind="value: registerPhone, valueUpdate: 'afterkeydown'"></input>
+      <br>
+      <label for="register-org">Organization</label>
+      <br>
+      <input type="text" class="input" id="register-org" data-bind="value: registerOrg, valueUpdate: 'afterkeydown'"></input>
+      <br>
       <br>
       <span class="error-msg" data-bind="text: registerError"></span>
       <button data-bind="disable: registerEmail() === '' || registerDisplayName() === '' " on-click="[[ register ]]">Create</button>
