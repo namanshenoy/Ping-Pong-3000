@@ -15,7 +15,7 @@ const port = process.env.PORT || 4000;
 
 // console.log(process.env.HOSTNAME === 'nashenoy-linux')
 // access redis mini-database
-const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({ password: process.env.REDIS_PASS }) : redis.createClient("redis://redis:6379", { password: process.env.REDIS_PASS });
+const client = process.env.HOSTNAME === 'localhost' ? redis.createClient({ password: process.env.REDIS_PASS }) : redis.createClient("redis://localhost:6379", { password: process.env.REDIS_PASS });
 
 if (process.env.HOSTNAME === 'localhost' && client) {
   console.log('created connection to redis instance locally')
@@ -135,11 +135,11 @@ client.on("error", () => {
  */
 
 app.post("/addPlayer", async (req, res) => {
-  if (await authHelper(req, res) === false) {
-    return;
-  } else if (await auth.deauth(req.body.token, req.body.email) === false) {
-    return;
-  }
+  // if (await authHelper(req, res) === false) {
+  //   return;
+  // } else if (await auth.deauth(req.body.token, req.body.email) === false) {
+  //   return;
+  // }
   addPlayerCall(req, res);
 });
 
@@ -226,6 +226,16 @@ app.post('/getRedisPlayers', (req, res) => {
   getRedisPlayers(res)
 })
 
+//TODO
+app.post("/manageScores", async (req, res) => {
+  if (await authHelper(req, res) === false) {
+    return;
+  } else if (await auth.deauth(req.body.token, req.body.email) === false) {
+    return;
+  }
+  manageScoresCall(req, res);
+});
+
 async function getRedisPlayers(res) {
   await client.hgetall(playerRedisKey, (err, resp) => {
     res.status(200).json(resp);
@@ -254,6 +264,7 @@ async function addPlayerCall(req, res) {
         // authenticate new user to log in immediately
         const token = await auth.login(req.body.email);
         resp.data.token = token;
+        console.log(token)
         res.status(200).json(resp.data);
         client.get("numPlayers", (err, val) => {
           addPlayerToRedis(req.body, parseInt(val) + 1)
@@ -302,6 +313,28 @@ async function updatePlayerCall(req, res) {
     e.response.data.logout = false;
     res.status(400).json(e.response.data);
   }
+}
+
+//TODO
+async function manageScoresCall(req, res) {
+  try {
+
+    // ensure numPlayers is set - making sure the table isn't empty
+    await checkNumPlayers();
+    const reqDecrypted = req.body;
+    // We have to decrypt the email address in order to be able to use it to index into the table
+    reqDecrypted.email = auth.decrypt(req.body.email);
+
+
+
+  } catch (e) {
+
+  }
+}
+
+//TODO
+async function manageScoresInRedis(jsonBody, updated_wins, updated_losses) {
+
 }
 
 async function delPlayerCall(req, res) {
@@ -616,7 +649,6 @@ async function setInMatch(email) {
 }
 
 async function authHelper(req, res) {
-
   if (req.body.token === undefined || req.body.email === undefined) {
     console.log('NO TOKEN')
     res.status(400).json({ 'error': 'Email or Token not provided. Please provide User ID and Token' })

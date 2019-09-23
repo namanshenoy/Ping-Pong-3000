@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const redis = require('redis');
-const client = process.env.HOSTNAME === 'nashenoy-linux' ? redis.createClient({password: process.env.REDIS_PASS}) :  redis.createClient("redis://redis:6379", {password: process.env.REDIS_PASS});
+const client = process.env.HOSTNAME === 'nashenoy-linux' ? redis.createClient({password: process.env.REDIS_PASS}) :  redis.createClient("redis://localhost:6379", {password: process.env.REDIS_PASS});
 
 const bluebird = require('bluebird')
 
